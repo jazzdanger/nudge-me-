@@ -17,7 +17,11 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
+import androidx.lifecycle.lifecycleScope
+import com.example.reminderapp.data.ReminderDatabase
+import com.example.reminderapp.data.ReminderRepository
 import com.google.android.material.switchmaterial.SwitchMaterial
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -30,6 +34,7 @@ class CreateReminderActivity : AppCompatActivity() {
     private lateinit var switchNotify: SwitchMaterial
     private lateinit var buttonSetReminder: Button
     private lateinit var backButton: ImageView
+    private lateinit var reminderRepository: ReminderRepository
     
     private var selectedDate: Calendar? = null
     private var selectedTime: Calendar? = null
@@ -42,6 +47,10 @@ class CreateReminderActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_create_reminder)
+        
+        // Initialize database
+        val database = ReminderDatabase.getDatabase(this)
+        reminderRepository = ReminderRepository(database.reminderDao())
         
         createNotificationChannel()
         initializeViews()
@@ -175,26 +184,41 @@ class CreateReminderActivity : AppCompatActivity() {
             // Format the date and time for display
             val displayDateTime = formatDateTimeForDisplay()
             
-            // Add reminder to the main list
-            MainActivity.addReminder(title, displayDateTime)
-
-            var scheduledTime = ""
-            if (switchNotify.isChecked) {
-                // Schedule the alarm only if Notify is enabled
-                scheduledTime = scheduleAlarm(title, notes)
+            // Create reminder object
+            val reminder = Reminder(
+                title = title,
+                dateTime = displayDateTime,
+                iconResId = R.drawable.ic_bell,
+                status = ReminderStatus.PENDING
+            )
+            
+            // Save to database
+            lifecycleScope.launch {
+                try {
+                    reminderRepository.insertReminder(reminder)
+                    
+                    var scheduledTime = ""
+                    if (switchNotify.isChecked) {
+                        // Schedule the alarm only if Notify is enabled
+                        scheduledTime = scheduleAlarm(title, notes)
+                    }
+                    
+                    val message = "Reminder set: $title at $displayDateTime"
+                    Toast.makeText(this@CreateReminderActivity, message, Toast.LENGTH_LONG).show()
+                    
+                    if (switchNotify.isChecked) {
+                        Log.d(TAG, "Reminder scheduled for: $scheduledTime")
+                    } else {
+                        Log.d(TAG, "Notify disabled; no alarm scheduled")
+                    }
+                    
+                    // Return to main activity
+                    finish()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error saving reminder to database: ${e.message}")
+                    Toast.makeText(this@CreateReminderActivity, "Error saving reminder: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
-            
-            val message = "Reminder set: $title at $displayDateTime"
-            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-            
-            if (switchNotify.isChecked) {
-                Log.d(TAG, "Reminder scheduled for: $scheduledTime")
-            } else {
-                Log.d(TAG, "Notify disabled; no alarm scheduled")
-            }
-            
-            // Return to main activity
-            finish()
         } catch (e: Exception) {
             Log.e(TAG, "Error setting reminder: ${e.message}")
             Toast.makeText(this, "Error setting reminder: ${e.message}", Toast.LENGTH_SHORT).show()

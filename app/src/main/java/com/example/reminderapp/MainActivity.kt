@@ -16,12 +16,17 @@ import android.widget.Toast
 import androidx.core.app.NotificationCompat
     import androidx.core.view.ViewCompat
     import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.drawerlayout.widget.DrawerLayout
+import com.example.reminderapp.data.ReminderDatabase
+import com.example.reminderapp.data.ReminderRepository
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -35,40 +40,27 @@ import java.util.*
     private lateinit var reminderAdapter: ReminderAdapter
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navigationView: NavigationView
-    
-    companion object {
-        private val reminders = mutableListOf<Reminder>()
-        
-        fun addReminder(title: String, dateTime: String, iconResId: Int = R.drawable.ic_bell) {
-            val newReminder = Reminder(title, dateTime, iconResId, ReminderStatus.PENDING)
-            reminders.add(0, newReminder) // Add to the top of the list
-            Log.d("MainActivity", "Added reminder: $title, total reminders: ${reminders.size}")
-        }
-        
-        fun getReminders(): List<Reminder> {
-            Log.d("MainActivity", "Getting reminders, count: ${reminders.size}")
-            return reminders.toList()
-        }
-        
-        fun deleteReminder(reminder: Reminder) {
-            reminders.remove(reminder)
-            Log.d("MainActivity", "Deleted reminder: ${reminder.title}, remaining: ${reminders.size}")
-        }
-    }
+    private lateinit var reminderRepository: ReminderRepository
 
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
         enableEdgeToEdge()
             setContentView(R.layout.activity_main)
 
+        // Initialize database
+        val database = ReminderDatabase.getDatabase(this)
+        reminderRepository = ReminderRepository(database.reminderDao())
+
         createNotificationChannel()
         setupPermissionLauncher()
         initializeViews()
-        loadInitialReminders() // Load reminders first
-        setupRecyclerView() // Then setup adapter
+        setupRecyclerView() // Setup adapter first
         setupClickListeners()
         setupBottomNavigation()
         requestFirstLaunchPermissionsIfNeeded()
+        
+        // Observe reminders from database
+        observeReminders()
         
         // Handle window insets for edge-to-edge display
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content)) { v, insets ->
@@ -77,14 +69,9 @@ import java.util.*
             insets
         }
         
-        Log.d("MainActivity", "MainActivity created with ${reminders.size} reminders")
+        Log.d("MainActivity", "MainActivity created")
         
-        // Test: Add a reminder immediately to verify the system works
-        if (reminders.isEmpty()) {
-            addReminder("Test Reminder", "Today, 12:00 PM", R.drawable.ic_bell)
-            refreshReminderList()
-            Toast.makeText(this, "Test reminder added!", Toast.LENGTH_SHORT).show()
-        }
+        // No test reminders - start with empty list
     }
 
     private fun setupPermissionLauncher() {
@@ -129,12 +116,7 @@ import java.util.*
         prefs.edit().putBoolean("permissions_requested", true).apply()
     }
     
-    override fun onResume() {
-        super.onResume()
-        // Refresh the reminder list when returning from CreateReminderActivity
-        refreshReminderList()
-        Log.d("MainActivity", "onResume called, reminders count: ${reminders.size}")
-    }
+
     
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -166,14 +148,14 @@ import java.util.*
     }
     
     private fun setupRecyclerView() {
-        val currentReminders = getReminders()
-        Log.d("MainActivity", "Setting up RecyclerView with ${currentReminders.size} reminders")
+        Log.d("MainActivity", "Setting up RecyclerView")
         
-        reminderAdapter = ReminderAdapter(currentReminders) { reminder ->
+        reminderAdapter = ReminderAdapter(emptyList()) { reminder ->
             // Handle reminder deletion
-            deleteReminder(reminder)
-            Toast.makeText(this, "Reminder deleted: ${reminder.title}", Toast.LENGTH_SHORT).show()
-            refreshReminderList()
+            lifecycleScope.launch {
+                reminderRepository.deleteReminder(reminder)
+                Toast.makeText(this@MainActivity, "Reminder deleted: ${reminder.title}", Toast.LENGTH_SHORT).show()
+            }
         }
         recyclerViewReminders.layoutManager = LinearLayoutManager(this)
         recyclerViewReminders.adapter = reminderAdapter
@@ -181,21 +163,12 @@ import java.util.*
         Log.d("MainActivity", "RecyclerView setup complete")
     }
     
-    private fun refreshReminderList() {
-        val currentReminders = getReminders()
-        Log.d("MainActivity", "Refreshing reminder list with ${currentReminders.size} reminders")
-        // Update the adapter with the latest reminders
-        reminderAdapter.updateReminders(currentReminders)
-    }
-    
-    private fun loadInitialReminders() {
-        // Only load initial reminders if the list is empty
-        if (reminders.isEmpty()) {
-            val sampleReminders = getSampleReminders()
-            reminders.addAll(sampleReminders)
-            Log.d("MainActivity", "Loaded ${sampleReminders.size} sample reminders")
-        } else {
-            Log.d("MainActivity", "Reminders already loaded: ${reminders.size}")
+    private fun observeReminders() {
+        lifecycleScope.launch {
+            reminderRepository.allReminders.collectLatest { reminders ->
+                Log.d("MainActivity", "Observed ${reminders.size} reminders from database")
+                reminderAdapter.updateReminders(reminders)
+            }
         }
     }
     
@@ -270,20 +243,11 @@ import java.util.*
         }
     }
     
-    private fun getSampleReminders(): List<Reminder> {
-        return listOf(
-            Reminder("Team Meeting", "Today, 3:00 PM", R.drawable.ic_calendar, ReminderStatus.PENDING),
-            Reminder("Grocery Shopping", "Tomorrow, 9:00 AM", R.drawable.ic_bell, ReminderStatus.ACTIVE),
-            Reminder("Call Mom", "Today, 7:00 PM", R.drawable.ic_bell, ReminderStatus.ACTIVE),
-            Reminder("Doctor Appointment", "Friday, 2:30 PM", R.drawable.ic_calendar, ReminderStatus.PENDING),
-            Reminder("Pay Bills", "Sunday, 10:00 AM", R.drawable.ic_bell, ReminderStatus.PENDING),
-            Reminder("Gym Workout", "Tomorrow, 6:00 AM", R.drawable.ic_bag, ReminderStatus.PENDING),
-            Reminder("Project Deadline", "Next Week, 5:00 PM", R.drawable.ic_calendar, ReminderStatus.PENDING)
-        )
-    }
+
 }
 
 data class Reminder(
+    val id: Long = 0,
     val title: String,
     val dateTime: String,
     val iconResId: Int,
