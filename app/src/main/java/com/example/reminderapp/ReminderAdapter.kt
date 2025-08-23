@@ -50,6 +50,7 @@ class ReminderAdapter(
         when (reminder.status) {
             ReminderStatus.PENDING -> {
                 holder.iconStatus.setImageResource(R.drawable.ic_circle_empty)
+                holder.iconStatus.setColorFilter(holder.itemView.resources.getColor(R.color.blue_500))
             }
             ReminderStatus.ACTIVE -> {
                 holder.iconStatus.setImageResource(R.drawable.ic_check_circle)

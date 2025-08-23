@@ -27,6 +27,7 @@ class CreateReminderActivity : AppCompatActivity() {
     private lateinit var editTextTime: EditText
     private lateinit var editTextNotes: EditText
     private lateinit var switchRepeat: SwitchMaterial
+    private lateinit var switchNotify: SwitchMaterial
     private lateinit var buttonSetReminder: Button
     private lateinit var backButton: ImageView
     
@@ -45,6 +46,7 @@ class CreateReminderActivity : AppCompatActivity() {
         createNotificationChannel()
         initializeViews()
         setupClickListeners()
+        prefillTodayDefaults()
     }
     
     private fun createNotificationChannel() {
@@ -71,6 +73,7 @@ class CreateReminderActivity : AppCompatActivity() {
         editTextTime = findViewById(R.id.editTextTime)
         editTextNotes = findViewById(R.id.editTextNotes)
         switchRepeat = findViewById(R.id.switchRepeat)
+        switchNotify = findViewById(R.id.switchNotify)
         buttonSetReminder = findViewById(R.id.buttonSetReminder)
         backButton = findViewById(R.id.backButton)
     }
@@ -91,6 +94,25 @@ class CreateReminderActivity : AppCompatActivity() {
         buttonSetReminder.setOnClickListener {
             saveReminder()
         }
+    }
+
+    private fun prefillTodayDefaults() {
+        // Default date to today and time to next hour
+        val now = Calendar.getInstance()
+        selectedDate = Calendar.getInstance().apply {
+            set(Calendar.YEAR, now.get(Calendar.YEAR))
+            set(Calendar.MONTH, now.get(Calendar.MONTH))
+            set(Calendar.DAY_OF_MONTH, now.get(Calendar.DAY_OF_MONTH))
+        }
+        val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+        editTextDate.setText(dateFormat.format(selectedDate!!.time))
+
+        selectedTime = Calendar.getInstance().apply {
+            set(Calendar.MINUTE, 0)
+            add(Calendar.HOUR_OF_DAY, 1)
+        }
+        val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+        editTextTime.setText(timeFormat.format(selectedTime!!.time))
     }
     
     private fun showDatePicker() {
@@ -155,14 +177,21 @@ class CreateReminderActivity : AppCompatActivity() {
             
             // Add reminder to the main list
             MainActivity.addReminder(title, displayDateTime)
-            
-            // Schedule the alarm
-            val scheduledTime = scheduleAlarm(title, notes)
+
+            var scheduledTime = ""
+            if (switchNotify.isChecked) {
+                // Schedule the alarm only if Notify is enabled
+                scheduledTime = scheduleAlarm(title, notes)
+            }
             
             val message = "Reminder set: $title at $displayDateTime"
             Toast.makeText(this, message, Toast.LENGTH_LONG).show()
             
-            Log.d(TAG, "Reminder scheduled for: $scheduledTime")
+            if (switchNotify.isChecked) {
+                Log.d(TAG, "Reminder scheduled for: $scheduledTime")
+            } else {
+                Log.d(TAG, "Notify disabled; no alarm scheduled")
+            }
             
             // Return to main activity
             finish()

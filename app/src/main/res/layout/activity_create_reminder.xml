@@ -5,6 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
     android:orientation="vertical"
     tools:context=".CreateReminderActivity">
 
@@ -19,8 +20,8 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:orientation="horizontal"
             android:gravity="center_vertical"
+            android:orientation="horizontal"
             android:paddingStart="16dp"
             android:paddingEnd="16dp">
 
@@ -28,20 +29,20 @@
                 android:id="@+id/backButton"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/ic_arrow_back"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Back" />
+                android:contentDescription="Back"
+                android:src="@drawable/ic_arrow_back" />
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:fontFamily="sans-serif-medium"
+                android:gravity="center"
                 android:text="Create New"
                 android:textColor="@android:color/white"
                 android:textSize="20sp"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:fontFamily="sans-serif-medium" />
+                android:textStyle="bold" />
 
             <View
                 android:layout_width="24dp"
@@ -61,7 +62,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="16dp">
 
             <!-- Title Input -->
             <TextView
@@ -125,6 +129,28 @@
                 android:padding="12dp"
                 android:layout_marginBottom="16dp" />
 
+            <!-- Notify Me Option -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Notify me"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"
+                android:layout_marginBottom="8dp" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchNotify"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Enable notifications"
+                android:textOn="On"
+                android:textOff="Off"
+                android:checked="true"
+                app:thumbTint="@color/blue_500"
+                app:trackTint="@color/gray_300"
+                android:layout_marginBottom="16dp" />
+
             <!-- Notes Input -->
             <TextView
                 android:layout_width="match_parent"
@@ -163,7 +189,6 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:padding="12dp"
-                android:background="@drawable/edit_text_background"
                 android:layout_marginBottom="24dp">
 
                 <LinearLayout

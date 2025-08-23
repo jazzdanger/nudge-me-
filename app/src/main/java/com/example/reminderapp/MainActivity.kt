@@ -10,12 +10,16 @@ import android.util.Log
 import android.widget.ImageView
 import android.widget.Toast
     import androidx.activity.enableEdgeToEdge
+    import androidx.activity.result.ActivityResultLauncher
+    import androidx.activity.result.contract.ActivityResultContracts
     import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
     import androidx.core.view.ViewCompat
     import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.drawerlayout.widget.DrawerLayout
+import com.google.android.material.navigation.NavigationView
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import java.text.SimpleDateFormat
@@ -26,8 +30,11 @@ import java.util.*
     private lateinit var bottomNavigation: BottomNavigationView
     private lateinit var fabAddReminder: FloatingActionButton
     private lateinit var profileButton: ImageView
-    private lateinit var notificationButton: ImageView
+    // Removed notificationButton as per requirement
+    private lateinit var permissionLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var reminderAdapter: ReminderAdapter
+    private lateinit var drawerLayout: DrawerLayout
+    private lateinit var navigationView: NavigationView
     
     companion object {
         private val reminders = mutableListOf<Reminder>()
@@ -55,11 +62,13 @@ import java.util.*
             setContentView(R.layout.activity_main)
 
         createNotificationChannel()
+        setupPermissionLauncher()
         initializeViews()
         loadInitialReminders() // Load reminders first
         setupRecyclerView() // Then setup adapter
         setupClickListeners()
         setupBottomNavigation()
+        requestFirstLaunchPermissionsIfNeeded()
         
         // Handle window insets for edge-to-edge display
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content)) { v, insets ->
@@ -76,6 +85,48 @@ import java.util.*
             refreshReminderList()
             Toast.makeText(this, "Test reminder added!", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun setupPermissionLauncher() {
+        permissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { results ->
+            val denied = results.filterValues { granted -> !granted }.keys
+            if (denied.isEmpty()) {
+                Toast.makeText(this, "All permissions granted", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Permissions denied: ${denied.joinToString()}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun requestFirstLaunchPermissionsIfNeeded() {
+        val prefs = getSharedPreferences("onboarding", Context.MODE_PRIVATE)
+        val asked = prefs.getBoolean("permissions_requested", false)
+        if (asked) return
+
+        val permissions = mutableListOf<String>()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(android.Manifest.permission.READ_MEDIA_IMAGES)
+            permissions.add(android.Manifest.permission.READ_MEDIA_VIDEO)
+            permissions.add(android.Manifest.permission.READ_MEDIA_AUDIO)
+        } else {
+            permissions.add(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+                permissions.add(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            }
+        }
+
+        permissions.add(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+        permissions.add(android.Manifest.permission.ACCESS_FINE_LOCATION)
+
+        permissionLauncher.launch(permissions.toTypedArray())
+        prefs.edit().putBoolean("permissions_requested", true).apply()
     }
     
     override fun onResume() {
@@ -108,7 +159,9 @@ import java.util.*
         bottomNavigation = findViewById(R.id.bottomNavigation)
         fabAddReminder = findViewById(R.id.fabAddReminder)
         profileButton = findViewById(R.id.profileButton)
-        notificationButton = findViewById(R.id.notificationButton)
+        drawerLayout = findViewById(R.id.drawerLayout)
+        navigationView = findViewById(R.id.navigationView)
+        // notificationButton removed from layout
         Log.d("MainActivity", "Views initialized")
     }
     
@@ -154,14 +207,19 @@ import java.util.*
         }
         
         profileButton.setOnClickListener {
-            Toast.makeText(this, "Profile clicked", Toast.LENGTH_SHORT).show()
-            // Handle profile button click
+            drawerLayout.open()
         }
         
-        notificationButton.setOnClickListener {
-            // Test notification
-            showTestNotification()
-            Toast.makeText(this, "Test notification sent", Toast.LENGTH_SHORT).show()
+        // notificationButton click listener removed
+        navigationView.setNavigationItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.menu_profile -> Toast.makeText(this, "Profile", Toast.LENGTH_SHORT).show()
+                R.id.menu_settings -> Toast.makeText(this, "Settings", Toast.LENGTH_SHORT).show()
+                R.id.menu_notifications -> Toast.makeText(this, "Notifications", Toast.LENGTH_SHORT).show()
+                R.id.menu_about -> Toast.makeText(this, "About", Toast.LENGTH_SHORT).show()
+            }
+            drawerLayout.close()
+            true
         }
     }
     
