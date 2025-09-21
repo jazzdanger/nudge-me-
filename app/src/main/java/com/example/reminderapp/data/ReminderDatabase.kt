@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.reminderapp.ReminderStatus
 
-@Database(entities = [ReminderEntity::class], version = 1, exportSchema = false)
+@Database(entities = [ReminderEntity::class], version = 2, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class ReminderDatabase : RoomDatabase() {
     abstract fun reminderDao(): ReminderDao
@@ -22,7 +22,9 @@ abstract class ReminderDatabase : RoomDatabase() {
                     context.applicationContext,
                     ReminderDatabase::class.java,
                     "reminder_database"
-                ).build()
+                )
+                .fallbackToDestructiveMigration() // This will recreate the database with new schema
+                .build()
                 INSTANCE = instance
                 instance
             }

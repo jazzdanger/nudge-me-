@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">ReminderApp</string>
+    <string name="google_maps_key">AIzaSyC4PnY2-QExuDI4UfIifSrY49vXAsJST2s</string>
 </resources>

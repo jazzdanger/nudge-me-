@@ -1,0 +1,9 @@
+<resources>
+    <!-- Night-specific color overrides only; no styles to avoid duplicates -->
+    <color name="default_text_color">#FFFFFFFF</color>
+    <color name="colorBackground">#121212</color>
+    <color name="colorOnBackground">#FFFFFFFF</color>
+    <color name="colorSurface">#1E1E1E</color>
+    <color name="colorOnSurface">#FFFFFFFF</color>
+    <color name="gray_600">#FF9E9E9E</color>
+</resources>

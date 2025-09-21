@@ -60,6 +60,7 @@
                         android:textColor="@android:color/white"
                         android:textSize="14sp" />
 
+
                 </LinearLayout>
 
                 <!-- Removed notification button as per requirement -->
@@ -95,6 +96,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@android:color/white"
+            android:paddingBottom="@dimen/design_bottom_navigation_height"
             app:menu="@menu/bottom_navigation_menu" />
 
     </LinearLayout>

@@ -27,6 +27,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import androidx.appcompat.app.AppCompatDelegate
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -44,6 +45,7 @@ import java.util.*
 
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         enableEdgeToEdge()
             setContentView(R.layout.activity_main)
 
@@ -62,10 +64,11 @@ import java.util.*
         // Observe reminders from database
         observeReminders()
         
-        // Handle window insets for edge-to-edge display
+        // Handle window insets for edge-to-edge display without double bottom padding
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            // Apply top/side insets; leave bottom to BottomNavigationView which already accounts for nav bar
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
             insets
         }
         
@@ -251,7 +254,8 @@ data class Reminder(
     val title: String,
     val dateTime: String,
     val iconResId: Int,
-    val status: ReminderStatus
+    val status: ReminderStatus,
+    val repeatDays: Set<Int> = emptySet() // 1=Sunday, 2=Monday, ..., 7=Saturday
 )
 
 enum class ReminderStatus {

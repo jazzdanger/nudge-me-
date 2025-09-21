@@ -1,12 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="blue_500">#2196F3</color>
-    <color name="green_500">#4CAF50</color>
-    <color name="red_500">#F44336</color>
-    <color name="gray_600">#757575</color>
-    <color name="gray_300">#E0E0E0</color>
-    <color name="light_green">#E8F5E8</color>
-    <color name="light_red">#FFEBEE</color>
+<!-- Primary colors -->
+<color name="colorPrimary">#6200EE</color>
+<color name="colorPrimaryVariant">#3700B3</color>
+<color name="colorOnPrimary">#FFFFFF</color>
+
+<!-- Secondary colors -->
+<color name="colorSecondary">#03DAC6</color>
+<color name="colorSecondaryVariant">#018786</color>
+<color name="colorOnSecondary">#000000</color>
+
+<!-- Standard background and text colors -->
+<color name="colorBackground">#FFFFFF</color>
+<color name="colorOnBackground">#000000</color> <!-- Black text on light background -->
+<color name="colorSurface">#FFFFFF</color>
+<color name="colorOnSurface">#000000</color>   <!-- Black text on light surfaces -->
+<color name="textColorPrimary">#DE000000</color> <!-- 87% black -->
+<color name="textColorSecondary">#8A000000</color><!-- 54% black -->
+<color name="textColorHint">#61000000</color> <!-- 38% black -->
+
+<!-- Your specific colors -->
+<color name="blue_500">#2196F3</color>
+<color name="gray_100">#F5F5F5</color>
+<color name="gray_300">#E0E0E0</color>
+<color name="gray_600">#757575</color>
+<color name="green_500">#4CAF50</color>
+<color name="red_500">#F44336</color>
+<color name="light_green">#C8E6C9</color>
+<color name="default_text_color">#000000</color> <!-- Your default black -->
 </resources>
+

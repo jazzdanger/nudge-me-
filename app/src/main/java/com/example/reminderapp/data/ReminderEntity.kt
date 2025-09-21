@@ -12,20 +12,28 @@ data class ReminderEntity(
     val title: String,
     val dateTime: String,
     val iconResId: Int,
-    val status: ReminderStatus
+    val status: ReminderStatus,
+    val repeatDays: String = "" // Store as comma-separated string
 ) {
     fun toReminder(): Reminder {
-        return Reminder(id, title, dateTime, iconResId, status)
+        val days = if (repeatDays.isEmpty()) {
+            emptySet()
+        } else {
+            repeatDays.split(",").map { it.toInt() }.toSet()
+        }
+        return Reminder(id, title, dateTime, iconResId, status, days)
     }
     
     companion object {
         fun fromReminder(reminder: Reminder): ReminderEntity {
+            val daysString = reminder.repeatDays.joinToString(",")
             return ReminderEntity(
                 id = reminder.id,
                 title = reminder.title,
                 dateTime = reminder.dateTime,
                 iconResId = reminder.iconResId,
-                status = reminder.status
+                status = reminder.status,
+                repeatDays = daysString
             )
         }
     }

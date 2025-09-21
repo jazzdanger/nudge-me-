@@ -11,34 +11,81 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.Toast
+import android.widget.TextView
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.reminderapp.data.ReminderDatabase
 import com.example.reminderapp.data.ReminderRepository
 import com.google.android.material.switchmaterial.SwitchMaterial
+import com.google.android.material.chip.Chip
+import android.widget.RadioButton
+import android.widget.RadioGroup
+import android.widget.ImageButton
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.location.Geofence
+import com.google.android.gms.location.GeofencingClient
+import com.google.android.gms.location.GeofencingRequest
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
-class CreateReminderActivity : AppCompatActivity() {
+class CreateReminderActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var editTextTitle: EditText
     private lateinit var editTextDate: EditText
     private lateinit var editTextTime: EditText
     private lateinit var editTextNotes: EditText
-    private lateinit var switchRepeat: SwitchMaterial
     private lateinit var switchNotify: SwitchMaterial
+    private lateinit var chipMonday: Chip
+    private lateinit var chipTuesday: Chip
+    private lateinit var chipWednesday: Chip
+    private lateinit var chipThursday: Chip
+    private lateinit var chipFriday: Chip
+    private lateinit var chipSaturday: Chip
+    private lateinit var chipSunday: Chip
     private lateinit var buttonSetReminder: Button
+    private lateinit var dateTimeContainer: View
     private lateinit var backButton: ImageView
     private lateinit var reminderRepository: ReminderRepository
+    private lateinit var geofencingClient: GeofencingClient
+    private lateinit var fusedLocationClient: com.google.android.gms.location.FusedLocationProviderClient
+    private lateinit var locationPermissionLauncher: ActivityResultLauncher<Array<String>>
+    private lateinit var mapPickerLauncher: ActivityResultLauncher<Intent>
     
     private var selectedDate: Calendar? = null
     private var selectedTime: Calendar? = null
     private val CHANNEL_ID = "ReminderChannel"
+    private var selectedLatitude: Double? = null
+    private var selectedLongitude: Double? = null
+    private var useLocationTrigger: Boolean = false
+    private var selectedDays: MutableSet<Int> = mutableSetOf() // 1=Sunday, 2=Monday, ..., 7=Saturday
+    private lateinit var radioGroupTriggerType: RadioGroup
+    private lateinit var radioEnterLocation: RadioButton
+    private lateinit var radioLeaveLocation: RadioButton
+    private lateinit var radioAtLocation: RadioButton
+    private lateinit var radioNotAtLocation: RadioButton
+    private var selectedTriggerType: LocationTriggerType = LocationTriggerType.ENTER
+    
+    // Map preview variables
+    private lateinit var buttonFullscreenMap: ImageButton
+    private lateinit var buttonCurrentLocation: ImageButton
+    private var previewMap: GoogleMap? = null
+    private var mapPreviewFragment: SupportMapFragment? = null
     
     companion object {
         private const val TAG = "CreateReminderActivity"
@@ -56,6 +103,10 @@ class CreateReminderActivity : AppCompatActivity() {
         initializeViews()
         setupClickListeners()
         prefillTodayDefaults()
+        geofencingClient = LocationServices.getGeofencingClient(this)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        setupLocationPermissionLauncher()
+        setupMapPickerLauncher()
     }
     
     private fun createNotificationChannel() {
@@ -81,10 +132,44 @@ class CreateReminderActivity : AppCompatActivity() {
         editTextDate = findViewById(R.id.editTextDate)
         editTextTime = findViewById(R.id.editTextTime)
         editTextNotes = findViewById(R.id.editTextNotes)
-        switchRepeat = findViewById(R.id.switchRepeat)
         switchNotify = findViewById(R.id.switchNotify)
+        
+        // Initialize day chips
+        chipMonday = findViewById(R.id.chipMonday)
+        chipTuesday = findViewById(R.id.chipTuesday)
+        chipWednesday = findViewById(R.id.chipWednesday)
+        chipThursday = findViewById(R.id.chipThursday)
+        chipFriday = findViewById(R.id.chipFriday)
+        chipSaturday = findViewById(R.id.chipSaturday)
+        chipSunday = findViewById(R.id.chipSunday)
+        
+        // Initialize trigger type radio buttons
+        radioGroupTriggerType = findViewById(R.id.radioGroupTriggerType)
+        radioEnterLocation = findViewById(R.id.radioEnterLocation)
+        radioLeaveLocation = findViewById(R.id.radioLeaveLocation)
+        radioAtLocation = findViewById(R.id.radioAtLocation)
+        radioNotAtLocation = findViewById(R.id.radioNotAtLocation)
+        
+        // Initialize map preview elements
+        buttonFullscreenMap = findViewById(R.id.buttonFullscreenMap)
+        buttonCurrentLocation = findViewById(R.id.buttonCurrentLocation)
+        
+        // Initialize map preview fragment
+        mapPreviewFragment = supportFragmentManager.findFragmentById(R.id.mapPreviewFragment) as? SupportMapFragment
+        // Optional: location switch may or may not exist depending on layout changes
+        findViewById<SwitchMaterial?>(R.id.switchLocation)?.let { locationSwitch ->
+            locationSwitch.setOnCheckedChangeListener { _, isChecked ->
+                useLocationTrigger = isChecked
+                findViewById<View>(R.id.locationPickerContainer)?.visibility = if (isChecked) View.VISIBLE else View.GONE
+                // Initialize map when location trigger is enabled
+                if (isChecked) {
+                    initializeMapPreview()
+                }
+            }
+        }
         buttonSetReminder = findViewById(R.id.buttonSetReminder)
         backButton = findViewById(R.id.backButton)
+        dateTimeContainer = findViewById(R.id.dateTimeContainer)
     }
     
     private fun setupClickListeners() {
@@ -100,10 +185,274 @@ class CreateReminderActivity : AppCompatActivity() {
             showTimePicker()
         }
         
+        // Toggle date/time visibility when notifications switch changes
+        switchNotify.setOnCheckedChangeListener { _, isChecked ->
+            dateTimeContainer.visibility = if (isChecked) View.VISIBLE else View.GONE
+        }
+
         buttonSetReminder.setOnClickListener {
             saveReminder()
         }
+        
+        // Setup day chip listeners
+        setupDayChipListeners()
+        
+        // Setup trigger type radio button listener
+        radioGroupTriggerType.setOnCheckedChangeListener { _, checkedId ->
+            selectedTriggerType = when (checkedId) {
+                R.id.radioEnterLocation -> LocationTriggerType.ENTER
+                R.id.radioLeaveLocation -> LocationTriggerType.LEAVE
+                R.id.radioAtLocation -> LocationTriggerType.AT
+                R.id.radioNotAtLocation -> LocationTriggerType.NOT_AT
+                else -> LocationTriggerType.ENTER
+            }
+            Log.d(TAG, "Selected trigger type: $selectedTriggerType")
+        }
+        
+        // Setup map preview button listeners
+        buttonFullscreenMap.setOnClickListener {
+            // Launch fullscreen map picker
+            val intent = Intent(this, MapPickerActivity::class.java)
+            mapPickerLauncher.launch(intent)
+        }
+        
+        buttonCurrentLocation.setOnClickListener {
+            selectCurrentLocation()
+        }
     }
+    
+    private fun setupDayChipListeners() {
+        chipMonday.setOnClickListener { 
+            toggleDaySelection(chipMonday, Calendar.MONDAY)
+        }
+        chipTuesday.setOnClickListener { 
+            toggleDaySelection(chipTuesday, Calendar.TUESDAY)
+        }
+        chipWednesday.setOnClickListener { 
+            toggleDaySelection(chipWednesday, Calendar.WEDNESDAY)
+        }
+        chipThursday.setOnClickListener { 
+            toggleDaySelection(chipThursday, Calendar.THURSDAY)
+        }
+        chipFriday.setOnClickListener { 
+            toggleDaySelection(chipFriday, Calendar.FRIDAY)
+        }
+        chipSaturday.setOnClickListener { 
+            toggleDaySelection(chipSaturday, Calendar.SATURDAY)
+        }
+        chipSunday.setOnClickListener { 
+            toggleDaySelection(chipSunday, Calendar.SUNDAY)
+        }
+    }
+    
+    private fun toggleDaySelection(chip: Chip, dayOfWeek: Int) {
+        chip.isChecked = !chip.isChecked
+        if (chip.isChecked) {
+            selectedDays.add(dayOfWeek)
+        } else {
+            selectedDays.remove(dayOfWeek)
+        }
+    }
+    
+    private fun initializeMapPreview() {
+        mapPreviewFragment?.getMapAsync(this)
+    }
+    
+    override fun onMapReady(map: GoogleMap) {
+        previewMap = map
+        
+        try {
+            // Set up the map
+            map.uiSettings.isZoomControlsEnabled = false
+            map.uiSettings.isCompassEnabled = false
+            map.uiSettings.isMapToolbarEnabled = false
+            map.uiSettings.isMyLocationButtonEnabled = false
+            
+            // Set initial camera position
+            val defaultLocation = LatLng(37.4219999, -122.0840575) // Default to Googleplex
+            map.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 15f))
+            
+            // If we have a selected location, show it
+            selectedLatitude?.let { lat ->
+                selectedLongitude?.let { lng ->
+                    val location = LatLng(lat, lng)
+                    map.addMarker(MarkerOptions().position(location))
+                    map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15f))
+                }
+            }
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error setting up map preview: ${e.message}")
+        }
+    }
+    
+    private fun updateMapPreview(latitude: Double, longitude: Double) {
+        previewMap?.let { map ->
+            try {
+                map.clear() // Clear existing markers
+                val location = LatLng(latitude, longitude)
+                map.addMarker(MarkerOptions().position(location))
+                map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15f))
+                Log.d(TAG, "Map preview updated with location: $latitude, $longitude")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error updating map preview: ${e.message}")
+            }
+        }
+    }
+
+    private fun selectCurrentLocation() {
+        // Check if we have location permission before proceeding
+        val hasFine = checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        val hasCoarse = checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        
+        if (!hasFine && !hasCoarse) {
+            Toast.makeText(this, "Location permission required", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        try {
+            val tokenSource = CancellationTokenSource()
+            fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, tokenSource.token)
+                .addOnSuccessListener { loc ->
+                    if (loc != null) {
+                        selectedLatitude = loc.latitude
+                        selectedLongitude = loc.longitude
+                        findViewById<TextView?>(R.id.textSelectedLocation)?.text = "${loc.latitude}, ${loc.longitude}"
+                        updateMapPreview(loc.latitude, loc.longitude)
+                    } else {
+                        // Fallback to lastLocation
+                        fusedLocationClient.lastLocation
+                            .addOnSuccessListener { last ->
+                                if (last != null) {
+                                    selectedLatitude = last.latitude
+                                    selectedLongitude = last.longitude
+                                    findViewById<TextView?>(R.id.textSelectedLocation)?.text = "${last.latitude}, ${last.longitude}"
+                                    updateMapPreview(last.latitude, last.longitude)
+                                } else {
+                                    Toast.makeText(this, "Unable to get location. Ensure GPS is on and try again.", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                            .addOnFailureListener { e ->
+                                Log.e(TAG, "lastLocation failed: ${e.message}")
+                                Toast.makeText(this, "Location error: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "getCurrentLocation failed: ${e.message}")
+                    Toast.makeText(this, "Location error: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error selecting location: ${e.message}")
+            Toast.makeText(this, "Error selecting location: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun setupLocationPermissionLauncher() {
+        locationPermissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { result ->
+            val granted = result[android.Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                    result[android.Manifest.permission.ACCESS_COARSE_LOCATION] == true
+            if (granted) {
+                selectCurrentLocation()
+            } else {
+                Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+    
+    private fun setupMapPickerLauncher() {
+        mapPickerLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode == RESULT_OK && result.data != null) {
+                selectedLatitude = result.data!!.getDoubleExtra("lat", 0.0)
+                selectedLongitude = result.data!!.getDoubleExtra("lng", 0.0)
+                findViewById<TextView?>(R.id.textSelectedLocation)?.text = "${selectedLatitude}, ${selectedLongitude}"
+                updateMapPreview(selectedLatitude!!, selectedLongitude!!)
+            }
+        }
+    }
+
+    private fun ensureLocationPermissionThenSelect() {
+        val hasFine = checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        val hasCoarse = checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (!hasFine && !hasCoarse) {
+            locationPermissionLauncher.launch(arrayOf(
+                android.Manifest.permission.ACCESS_FINE_LOCATION,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION
+            ))
+        } else {
+            selectCurrentLocation()
+        }
+    }
+
+    private fun addGeofenceForReminder(title: String) {
+        val latitude = selectedLatitude ?: return
+        val longitude = selectedLongitude ?: return
+        
+        // Determine transition types based on selected trigger type
+        val transitionTypes = when (selectedTriggerType) {
+            LocationTriggerType.ENTER -> Geofence.GEOFENCE_TRANSITION_ENTER
+            LocationTriggerType.LEAVE -> Geofence.GEOFENCE_TRANSITION_EXIT
+            LocationTriggerType.AT -> Geofence.GEOFENCE_TRANSITION_DWELL
+            LocationTriggerType.NOT_AT -> Geofence.GEOFENCE_TRANSITION_EXIT
+        }
+        
+        val geofence = Geofence.Builder()
+            .setRequestId("reminder_${System.currentTimeMillis()}")
+            .setCircularRegion(latitude, longitude, 150f)
+            .setExpirationDuration(Geofence.NEVER_EXPIRE)
+            .setTransitionTypes(transitionTypes)
+            .apply {
+                // Set dwell time for "at location" trigger
+                if (selectedTriggerType == LocationTriggerType.AT) {
+                    setLoiteringDelay(10000) // 10 seconds dwell time
+                }
+            }
+            .build()
+
+        val initialTrigger = when (selectedTriggerType) {
+            LocationTriggerType.ENTER -> GeofencingRequest.INITIAL_TRIGGER_ENTER
+            LocationTriggerType.LEAVE -> GeofencingRequest.INITIAL_TRIGGER_EXIT
+            LocationTriggerType.AT -> GeofencingRequest.INITIAL_TRIGGER_DWELL
+            LocationTriggerType.NOT_AT -> GeofencingRequest.INITIAL_TRIGGER_EXIT
+        }
+
+        val geofencingRequest = GeofencingRequest.Builder()
+            .setInitialTrigger(initialTrigger)
+            .addGeofence(geofence)
+            .build()
+
+        val intent = Intent(this, GeofenceBroadcastReceiver::class.java).apply {
+            putExtra("title", title)
+            putExtra("trigger_type", selectedTriggerType.name)
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val hasPermission = checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (!hasPermission) {
+            Toast.makeText(this, "Location permission required for geofencing", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        geofencingClient.addGeofences(geofencingRequest, pendingIntent)
+            .addOnSuccessListener {
+                Log.d(TAG, "Geofence added successfully with trigger type: $selectedTriggerType")
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Failed to add geofence: ${e.message}")
+                Toast.makeText(this, "Failed to add geofence: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+
 
     private fun prefillTodayDefaults() {
         // Default date to today and time to next hour
@@ -122,6 +471,10 @@ class CreateReminderActivity : AppCompatActivity() {
         }
         val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
         editTextTime.setText(timeFormat.format(selectedTime!!.time))
+
+        // Start with date/time hidden until notifications are enabled
+        dateTimeContainer.visibility = if (switchNotify.isChecked) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.locationPickerContainer)?.visibility = if (useLocationTrigger) View.VISIBLE else View.GONE
     }
     
     private fun showDatePicker() {
@@ -133,7 +486,7 @@ class CreateReminderActivity : AppCompatActivity() {
                     set(year, month, dayOfMonth)
                 }
                 val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-                editTextDate.setText(dateFormat.format(selectedDate?.time))
+                editTextDate.setText(dateFormat.format(selectedDate!!.time))
             },
             calendar.get(Calendar.YEAR),
             calendar.get(Calendar.MONTH),
@@ -152,7 +505,7 @@ class CreateReminderActivity : AppCompatActivity() {
                     set(Calendar.MINUTE, minute)
                 }
                 val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-                editTextTime.setText(timeFormat.format(selectedTime?.time))
+                editTextTime.setText(timeFormat.format(selectedTime!!.time))
             },
             calendar.get(Calendar.HOUR_OF_DAY),
             calendar.get(Calendar.MINUTE),
@@ -170,26 +523,29 @@ class CreateReminderActivity : AppCompatActivity() {
             return
         }
         
-        if (selectedDate == null) {
-            Toast.makeText(this, "Please select a date", Toast.LENGTH_SHORT).show()
-            return
-        }
-        
-        if (selectedTime == null) {
-            Toast.makeText(this, "Please select a time", Toast.LENGTH_SHORT).show()
-            return
+        if (switchNotify.isChecked) {
+            if (selectedDate == null) {
+                Toast.makeText(this, "Please select a date", Toast.LENGTH_SHORT).show()
+                return
+            }
+            
+            if (selectedTime == null) {
+                Toast.makeText(this, "Please select a time", Toast.LENGTH_SHORT).show()
+                return
+            }
         }
         
         try {
             // Format the date and time for display
-            val displayDateTime = formatDateTimeForDisplay()
+            val displayDateTime = if (switchNotify.isChecked) formatDateTimeForDisplay() else "No notification"
             
             // Create reminder object
             val reminder = Reminder(
                 title = title,
                 dateTime = displayDateTime,
                 iconResId = R.drawable.ic_bell,
-                status = ReminderStatus.PENDING
+                status = ReminderStatus.PENDING,
+                repeatDays = selectedDays.toSet()
             )
             
             // Save to database
@@ -197,20 +553,31 @@ class CreateReminderActivity : AppCompatActivity() {
                 try {
                     reminderRepository.insertReminder(reminder)
                     
-                    var scheduledTime = ""
                     if (switchNotify.isChecked) {
-                        // Schedule the alarm only if Notify is enabled
-                        scheduledTime = scheduleAlarm(title, notes)
-                    }
-                    
-                    val message = "Reminder set: $title at $displayDateTime"
-                    Toast.makeText(this@CreateReminderActivity, message, Toast.LENGTH_LONG).show()
-                    
-                    if (switchNotify.isChecked) {
+                        val scheduledTime = scheduleAlarm(title, notes)
                         Log.d(TAG, "Reminder scheduled for: $scheduledTime")
                     } else {
                         Log.d(TAG, "Notify disabled; no alarm scheduled")
                     }
+                    
+                    if (useLocationTrigger && selectedLatitude != null && selectedLongitude != null) {
+                        addGeofenceForReminder(title)
+                    }
+
+                    val message = when {
+                        useLocationTrigger -> {
+                            val triggerText = when (selectedTriggerType) {
+                                LocationTriggerType.ENTER -> "when entering location"
+                                LocationTriggerType.LEAVE -> "when leaving location"
+                                LocationTriggerType.AT -> "while at location"
+                                LocationTriggerType.NOT_AT -> "while not at location"
+                            }
+                            "Reminder set: $title $triggerText"
+                        }
+                        switchNotify.isChecked -> "Reminder set: $title at $displayDateTime"
+                        else -> "Reminder saved without notification"
+                    }
+                    Toast.makeText(this@CreateReminderActivity, message, Toast.LENGTH_LONG).show()
                     
                     // Return to main activity
                     finish()
@@ -238,7 +605,7 @@ class CreateReminderActivity : AppCompatActivity() {
         val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
         val timeString = timeFormat.format(selectedTime!!.time)
         
-        return when {
+        val baseDateString = when {
             // Today
             reminderDate.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
             reminderDate.get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR) -> {
@@ -260,6 +627,15 @@ class CreateReminderActivity : AppCompatActivity() {
                 val dateFormat = SimpleDateFormat("MMM dd", Locale.getDefault())
                 "${dateFormat.format(reminderDate.time)}, $timeString"
             }
+        }
+        
+        // Add repeat information if days are selected
+        return if (selectedDays.isNotEmpty()) {
+            val dayNames = listOf("", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+            val selectedDayNames = selectedDays.sorted().map { dayNames[it] }
+            "$baseDateString (Repeats: ${selectedDayNames.joinToString(", ")})"
+        } else {
+            baseDateString
         }
     }
     
@@ -326,4 +702,11 @@ class CreateReminderActivity : AppCompatActivity() {
         
         return scheduledTimeString
     }
+}
+
+enum class LocationTriggerType {
+    ENTER,      // Entering location
+    LEAVE,      // Leaving location  
+    AT,         // While at location
+    NOT_AT      // While not at location
 } 
