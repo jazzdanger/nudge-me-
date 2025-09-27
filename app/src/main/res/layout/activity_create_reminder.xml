@@ -151,15 +151,15 @@
 
             <com.google.android.material.switchmaterial.SwitchMaterial
                 android:id="@+id/switchNotify"
-                android:layout_width="wrap_content"
+                android:layout_width="224dp"
                 android:layout_height="wrap_content"
-                android:text="Enable notifications"
-                android:textOn="On"
-                android:textOff="Off"
+                android:layout_marginBottom="16dp"
                 android:checked="false"
+                android:text="Enable notifications"
+                android:textOff="Off"
+                android:textOn="On"
                 app:thumbTint="@color/blue_500"
-                app:trackTint="@color/gray_300"
-                android:layout_marginBottom="16dp" />
+                app:trackTint="@color/gray_300" />
 
             <!-- Notes Input -->
             <TextView
@@ -300,13 +300,13 @@
 
             <com.google.android.material.switchmaterial.SwitchMaterial
                 android:id="@+id/switchLocation"
-                android:layout_width="wrap_content"
+                android:layout_width="303dp"
                 android:layout_height="wrap_content"
-                android:text="Enable location-based notification"
+                android:layout_marginBottom="12dp"
                 android:checked="false"
+                android:text="Enable location-based notification"
                 app:thumbTint="@color/blue_500"
-                app:trackTint="@color/gray_300"
-                android:layout_marginBottom="12dp" />
+                app:trackTint="@color/gray_300" />
 
             <LinearLayout
                 android:id="@+id/locationPickerContainer"

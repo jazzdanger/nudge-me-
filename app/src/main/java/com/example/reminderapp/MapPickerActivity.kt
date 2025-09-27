@@ -12,12 +12,21 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.Circle
 import com.google.android.gms.maps.model.CircleOptions
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
+
+
+
+private lateinit var fusedLocationClient: FusedLocationProviderClient
+
 
 class MapPickerActivity : AppCompatActivity(), OnMapReadyCallback {
     private var googleMap: GoogleMap? = null
     private var circle: Circle? = null
     private var center: LatLng? = null
-    private var radiusMeters: Double = 150.0
+    private var radiusMeters: Double = 100.0
     
     companion object {
         private const val TAG = "MapPickerActivity"
@@ -26,6 +35,33 @@ class MapPickerActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_map_picker)
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+        findViewById<android.view.View>(R.id.buttonMyLocation).setOnClickListener {
+            if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                == android.content.pm.PackageManager.PERMISSION_GRANTED
+            ) {
+                fusedLocationClient.getCurrentLocation(
+                    Priority.PRIORITY_HIGH_ACCURACY,
+                    CancellationTokenSource().token
+                ).addOnSuccessListener { location ->
+                    if (location != null) {
+                        val currentLatLng = LatLng(location.latitude, location.longitude)
+                        googleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f))
+                        drawCircle(currentLatLng, radiusMeters)
+                        center = currentLatLng
+                        Log.d(TAG, "Moved to current location: $currentLatLng")
+                    } else {
+                        Toast.makeText(this, "Unable to get current location", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } else {
+                Toast.makeText(this, "Location permission not granted", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+
 
         Log.d(TAG, "MapPickerActivity onCreate started")
         
@@ -72,9 +108,28 @@ class MapPickerActivity : AppCompatActivity(), OnMapReadyCallback {
         googleMap = map
         
         try {
-            val initial = LatLng(37.4219999, -122.0840575) // Default to Googleplex
-            map.moveCamera(CameraUpdateFactory.newLatLngZoom(initial, 15f))
-            
+            if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                == android.content.pm.PackageManager.PERMISSION_GRANTED
+            ) {
+                fusedLocationClient.getCurrentLocation(
+                    Priority.PRIORITY_HIGH_ACCURACY,
+                    CancellationTokenSource().token
+                ).addOnSuccessListener { location ->
+                    if (location != null) {
+                        val currentLatLng = LatLng(location.latitude, location.longitude)
+                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f))
+                        drawCircle(currentLatLng, radiusMeters)
+                        center = currentLatLng
+                        Log.d(TAG, "Initial location set to current location: $currentLatLng")
+                    } else {
+                        Log.w(TAG, "Current location is null, falling back to default")
+                        val fallback = LatLng(37.4219999, -122.0840575) // fallback
+                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(fallback, 15f))
+                    }
+                }
+            }
+
+
             map.setOnMapClickListener { latLng ->
                 Log.d(TAG, "Map clicked at: ${latLng.latitude}, ${latLng.longitude}")
                 center = latLng

@@ -1,26 +1,27 @@
-    package com.example.reminderapp
+package com.example.reminderapp
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-    import android.os.Bundle
+import android.os.Bundle
 import android.util.Log
 import android.widget.ImageView
 import android.widget.Toast
-    import androidx.activity.enableEdgeToEdge
-    import androidx.activity.result.ActivityResultLauncher
-    import androidx.activity.result.contract.ActivityResultContracts
-    import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
-    import androidx.core.view.ViewCompat
-    import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.drawerlayout.widget.DrawerLayout
 import com.example.reminderapp.data.ReminderDatabase
+import com.example.reminderapp.data.ReminderEntity
 import com.example.reminderapp.data.ReminderRepository
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -31,7 +32,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import java.text.SimpleDateFormat
 import java.util.*
 
-    class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity() {
     private lateinit var recyclerViewReminders: RecyclerView
     private lateinit var bottomNavigation: BottomNavigationView
     private lateinit var fabAddReminder: FloatingActionButton
@@ -43,11 +44,11 @@ import java.util.*
     private lateinit var navigationView: NavigationView
     private lateinit var reminderRepository: ReminderRepository
 
-        override fun onCreate(savedInstanceState: Bundle?) {
-            super.onCreate(savedInstanceState)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         enableEdgeToEdge()
-            setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_main)
 
         // Initialize database
         val database = ReminderDatabase.getDatabase(this)
@@ -60,10 +61,10 @@ import java.util.*
         setupClickListeners()
         setupBottomNavigation()
         requestFirstLaunchPermissionsIfNeeded()
-        
+
         // Observe reminders from database
         observeReminders()
-        
+
         // Handle window insets for edge-to-edge display without double bottom padding
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -71,9 +72,9 @@ import java.util.*
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
             insets
         }
-        
+
         Log.d("MainActivity", "MainActivity created")
-        
+
         // No test reminders - start with empty list
     }
 
@@ -118,9 +119,9 @@ import java.util.*
         permissionLauncher.launch(permissions.toTypedArray())
         prefs.edit().putBoolean("permissions_requested", true).apply()
     }
-    
 
-    
+
+
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = "Reminder Notifications"
@@ -138,7 +139,7 @@ import java.util.*
             Log.d("MainActivity", "Notification channel created")
         }
     }
-    
+
     private fun initializeViews() {
         recyclerViewReminders = findViewById(R.id.recyclerViewReminders)
         bottomNavigation = findViewById(R.id.bottomNavigation)
@@ -149,43 +150,55 @@ import java.util.*
         // notificationButton removed from layout
         Log.d("MainActivity", "Views initialized")
     }
-    
+
     private fun setupRecyclerView() {
         Log.d("MainActivity", "Setting up RecyclerView")
-        
-        reminderAdapter = ReminderAdapter(emptyList()) { reminder ->
-            // Handle reminder deletion
-            lifecycleScope.launch {
-                reminderRepository.deleteReminder(reminder)
-                Toast.makeText(this@MainActivity, "Reminder deleted: ${reminder.title}", Toast.LENGTH_SHORT).show()
+
+        reminderAdapter = ReminderAdapter(
+            emptyList(),
+            onReminderDeleted = { reminderEntity ->
+                lifecycleScope.launch {
+                    reminderRepository.delete(reminderEntity)
+                    Toast.makeText(this@MainActivity, "Reminder deleted: ${reminderEntity.title}", Toast.LENGTH_SHORT).show()
+                }
+            },
+            onReminderMarkedDone = { reminderEntity ->
+                lifecycleScope.launch {
+                    val updated = reminderEntity.copy(
+                        isCompleted = true,
+                        status = ReminderStatus.COMPLETED
+                    )
+                    reminderRepository.update(updated)
+                    Toast.makeText(this@MainActivity, "Marked done: ${reminderEntity.title}", Toast.LENGTH_SHORT).show()
+                }
             }
-        }
+        )
         recyclerViewReminders.layoutManager = LinearLayoutManager(this)
         recyclerViewReminders.adapter = reminderAdapter
-        
+
         Log.d("MainActivity", "RecyclerView setup complete")
     }
-    
+
     private fun observeReminders() {
         lifecycleScope.launch {
-            reminderRepository.allReminders.collectLatest { reminders ->
-                Log.d("MainActivity", "Observed ${reminders.size} reminders from database")
+            reminderRepository.activeReminders.collectLatest { reminders ->
+                Log.d("MainActivity", "Observed ${reminders.size} active reminders from database")
                 reminderAdapter.updateReminders(reminders)
             }
         }
     }
-    
+
     private fun setupClickListeners() {
         fabAddReminder.setOnClickListener {
             Log.d("MainActivity", "FAB clicked, launching CreateReminderActivity")
             val intent = Intent(this, CreateReminderActivity::class.java)
             startActivity(intent)
         }
-        
+
         profileButton.setOnClickListener {
             drawerLayout.open()
         }
-        
+
         // notificationButton click listener removed
         navigationView.setNavigationItemSelectedListener { item ->
             when (item.itemId) {
@@ -198,12 +211,12 @@ import java.util.*
             true
         }
     }
-    
+
     private fun showTestNotification() {
         try {
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val notificationId = System.currentTimeMillis().toInt()
-            
+
             val notification = NotificationCompat.Builder(this, "ReminderChannel")
                 .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
                 .setContentTitle("Test Reminder")
@@ -214,38 +227,32 @@ import java.util.*
                 .setVibrate(longArrayOf(1000, 1000, 1000, 1000, 1000))
                 .setDefaults(NotificationCompat.DEFAULT_SOUND or NotificationCompat.DEFAULT_VIBRATE)
                 .build()
-            
+
             notificationManager.notify(notificationId, notification)
             Log.d("MainActivity", "Test notification sent")
         } catch (e: Exception) {
             Log.e("MainActivity", "Error sending test notification: ${e.message}")
         }
     }
-    
+
     private fun setupBottomNavigation() {
         bottomNavigation.setOnItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.nav_home -> {
-                    // Handle Home tab - show all reminders
+                    // Already on Home; ensure this activity is shown
+                    startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP))
                     true
                 }
                 R.id.nav_today -> {
-                    // Handle Today tab - show today's reminders
-                    true
-                }
-                R.id.nav_calendar -> {
-                    // Handle Calendar tab - show calendar view
-                    true
-                }
-                R.id.nav_stats -> {
-                    // Handle Stats tab - show statistics
+                    // Open History screen when History item clicked (uses nav_today id with title "History")
+                    startActivity(Intent(this, HistoryActivity::class.java))
                     true
                 }
                 else -> false
             }
         }
     }
-    
+
 
 }
 
@@ -255,11 +262,17 @@ data class Reminder(
     val dateTime: String,
     val iconResId: Int,
     val status: ReminderStatus,
-    val repeatDays: Set<Int> = emptySet() // 1=Sunday, 2=Monday, ..., 7=Saturday
+    val repeatDays: Set<Int> = emptySet(),
+    val isCompleted: Boolean = false,
+    val notes: String? = null,
+    val locationLatitude: Double? = null,
+    val locationLongitude: Double? = null,
+    val locationTriggerType: String? = null
 )
+
 
 enum class ReminderStatus {
     PENDING,
     ACTIVE,
     COMPLETED
-    }
+}

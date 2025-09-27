@@ -13,17 +13,31 @@ data class ReminderEntity(
     val dateTime: String,
     val iconResId: Int,
     val status: ReminderStatus,
-    val repeatDays: String = "" // Store as comma-separated string
+    val repeatDays: String = "", // Store as comma-separated string
+    val isCompleted: Boolean = false,
+    val notes: String? = null,
+    val locationLatitude: Double? = null,
+    val locationLongitude: Double? = null,
+    val locationTriggerType: String? = null
 ) {
+
     fun toReminder(): Reminder {
-        val days = if (repeatDays.isEmpty()) {
-            emptySet()
-        } else {
-            repeatDays.split(",").map { it.toInt() }.toSet()
-        }
-        return Reminder(id, title, dateTime, iconResId, status, days)
+        val days = if (repeatDays.isEmpty()) emptySet() else repeatDays.split(",").map { it.toInt() }.toSet()
+        return Reminder(
+            id = id,
+            title = title,
+            dateTime = dateTime,
+            iconResId = iconResId,
+            status = status,
+            repeatDays = days,
+            isCompleted = isCompleted,
+            notes = notes,
+            locationLatitude = locationLatitude,
+            locationLongitude = locationLongitude,
+            locationTriggerType = locationTriggerType
+        )
     }
-    
+
     companion object {
         fun fromReminder(reminder: Reminder): ReminderEntity {
             val daysString = reminder.repeatDays.joinToString(",")
@@ -33,7 +47,12 @@ data class ReminderEntity(
                 dateTime = reminder.dateTime,
                 iconResId = reminder.iconResId,
                 status = reminder.status,
-                repeatDays = daysString
+                repeatDays = daysString,
+                isCompleted = reminder.isCompleted,
+                notes = reminder.notes,
+                locationLatitude = reminder.locationLatitude,
+                locationLongitude = reminder.locationLongitude,
+                locationTriggerType = reminder.locationTriggerType
             )
         }
     }

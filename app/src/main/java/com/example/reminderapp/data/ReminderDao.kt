@@ -5,21 +5,21 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ReminderDao {
-    @Query("SELECT * FROM reminders ORDER BY id DESC")
-    fun getAllReminders(): Flow<List<ReminderEntity>>
-    
-    @Insert
-    suspend fun insertReminder(reminder: ReminderEntity): Long
-    
+    @Query("SELECT * FROM reminders WHERE isCompleted = 0 ORDER BY id DESC") // Or order by dateTime
+    fun getActiveReminders(): Flow<List<ReminderEntity>> // For Home Page
+
+    @Query("SELECT * FROM reminders WHERE isCompleted = 1 ORDER BY id DESC") // Or order by dateTime
+    fun getCompletedReminders(): Flow<List<ReminderEntity>> // For History Page
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertReminder(reminder: ReminderEntity)
+
     @Update
-    suspend fun updateReminder(reminder: ReminderEntity)
-    
+    suspend fun updateReminder(reminder: ReminderEntity) // This will be used to move to/from history
+
     @Delete
-    suspend fun deleteReminder(reminder: ReminderEntity)
-    
-    @Query("DELETE FROM reminders WHERE id = :reminderId")
-    suspend fun deleteReminderById(reminderId: Long)
-    
-    @Query("SELECT * FROM reminders WHERE id = :reminderId")
-    suspend fun getReminderById(reminderId: Long): ReminderEntity?
+    suspend fun deleteReminder(reminder: ReminderEntity) // For permanent deletion (optional from history)
+
+    @Query("SELECT * FROM reminders WHERE id = :id")
+    suspend fun getReminderById(id: Long): ReminderEntity?
 }

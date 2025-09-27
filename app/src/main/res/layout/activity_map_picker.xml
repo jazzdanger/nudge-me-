@@ -21,5 +21,18 @@
         android:textColor="@android:color/white"
         app:cornerRadius="8dp" />
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/buttonMyLocation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="60dp"
+        android:layout_marginRight="20dp"
+        android:contentDescription="My Location"
+        app:srcCompat="@drawable/ic_my_location"
+        app:tint="@android:color/white"
+        app:backgroundTint="@color/blue_500" />
+
+
 </FrameLayout>
 

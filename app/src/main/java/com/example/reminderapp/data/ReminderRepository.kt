@@ -1,28 +1,37 @@
 package com.example.reminderapp.data
 
-import com.example.reminderapp.Reminder
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 
 class ReminderRepository(private val reminderDao: ReminderDao) {
-    
-    val allReminders: Flow<List<Reminder>> = reminderDao.getAllReminders().map { entities ->
-        entities.map { it.toReminder() }
+
+    // Active reminders (isCompleted = 0)
+    val activeReminders: Flow<List<ReminderEntity>> = reminderDao.getActiveReminders()
+
+    // Completed reminders (History)
+    val completedReminders: Flow<List<ReminderEntity>> = reminderDao.getCompletedReminders()
+
+    // Insert a new reminder
+    suspend fun insert(reminder: ReminderEntity) {
+        reminderDao.insertReminder(reminder)
     }
-    
-    suspend fun insertReminder(reminder: Reminder): Long {
-        return reminderDao.insertReminder(ReminderEntity.fromReminder(reminder))
+
+    // Update a reminder (e.g., mark as completed / restore)
+    suspend fun update(reminderEntity: ReminderEntity) {
+        reminderDao.updateReminder(reminderEntity)
     }
-    
-    suspend fun updateReminder(reminder: Reminder) {
-        reminderDao.updateReminder(ReminderEntity.fromReminder(reminder))
+
+    // Delete a reminder
+    suspend fun delete(reminder: ReminderEntity) {
+        reminderDao.deleteReminder(reminder)
     }
-    
-    suspend fun deleteReminder(reminder: Reminder) {
-        reminderDao.deleteReminder(ReminderEntity.fromReminder(reminder))
+
+    // Delete a reminder by ID
+    suspend fun deleteById(id: Long) {
+        reminderDao.getReminderById(id)?.let { reminderDao.deleteReminder(it) }
     }
-    
-    suspend fun deleteReminderById(reminderId: Long) {
-        reminderDao.deleteReminderById(reminderId)
+
+    // Get a single reminder by ID
+    suspend fun getReminderById(id: Long): ReminderEntity? {
+        return reminderDao.getReminderById(id)
     }
 }

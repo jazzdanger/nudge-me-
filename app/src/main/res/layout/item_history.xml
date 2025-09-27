@@ -45,7 +45,7 @@
                 android:id="@+id/textTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Team Meeting"
+                android:text="Reminder Title"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="@android:color/black" />
@@ -54,14 +54,14 @@
                 android:id="@+id/textDateTime"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Today, 3:00 PM"
+                android:text="Date &amp; Time"
                 android:textSize="14sp"
                 android:textColor="@color/gray_600"
                 android:layout_marginTop="2dp" />
 
         </LinearLayout>
 
-        <!-- Tick Box - enhanced visibility -->
+        <!-- Tick Box / Status Icon -->
         <ImageView
             android:id="@+id/iconStatus"
             android:layout_width="32dp"
@@ -74,4 +74,4 @@
 
     </LinearLayout>
 
-</androidx.cardview.widget.CardView> 
+</androidx.cardview.widget.CardView>
