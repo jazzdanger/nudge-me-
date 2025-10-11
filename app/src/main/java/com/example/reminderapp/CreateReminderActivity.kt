@@ -27,7 +27,9 @@ import androidx.lifecycle.lifecycleScope
 import com.example.reminderapp.data.ReminderDatabase
 import com.example.reminderapp.data.ReminderRepository
 import com.example.reminderapp.data.ReminderEntity
+import com.google.android.material.slider.Slider
 import com.google.android.material.switchmaterial.SwitchMaterial
+import com.google.android.gms.maps.model.CircleOptions
 import com.google.android.material.chip.Chip
 import android.widget.RadioButton
 import android.widget.RadioGroup
@@ -78,6 +80,7 @@ class CreateReminderActivity : AppCompatActivity(), OnMapReadyCallback {
     private val CHANNEL_ID = "ReminderChannel"
     private var selectedLatitude: Double? = null
     private var selectedLongitude: Double? = null
+    private var selectedRadius: Double = 100.0 // Default radius in meters
     private var useLocationTrigger: Boolean = false
     private var selectedDays: MutableSet<Int> = mutableSetOf() // 1=Sunday, 2=Monday, ..., 7=Saturday
     private lateinit var radioGroupTriggerType: RadioGroup
@@ -85,6 +88,8 @@ class CreateReminderActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var radioLeaveLocation: RadioButton
     private lateinit var radioAtLocation: RadioButton
     private lateinit var radioNotAtLocation: RadioButton
+    private lateinit var radiusSlider: Slider
+    private lateinit var radiusText: TextView
     private var selectedTriggerType: LocationTriggerType = LocationTriggerType.ENTER
 
     // Map preview variables
@@ -219,7 +224,7 @@ class CreateReminderActivity : AppCompatActivity(), OnMapReadyCallback {
         editTextDate = findViewById(R.id.editTextDate)
         editTextTime = findViewById(R.id.editTextTime)
         editTextNotes = findViewById(R.id.editTextNotes)
-        switchNotify = findViewById(R.id.switchNotify)
+        switchNotify = findViewById<SwitchMaterial>(R.id.switchNotify)
 
         // Initialize day chips
         chipMonday = findViewById(R.id.chipMonday)
@@ -240,6 +245,10 @@ class CreateReminderActivity : AppCompatActivity(), OnMapReadyCallback {
         // Initialize map preview elements
         buttonFullscreenMap = findViewById(R.id.buttonFullscreenMap)
         buttonCurrentLocation = findViewById(R.id.buttonCurrentLocation)
+
+        // Initialize radius slider
+        radiusSlider = findViewById(R.id.radiusSlider)
+        radiusText = findViewById(R.id.radiusText)
 
         // Initialize map preview fragment
         mapPreviewFragment = supportFragmentManager.findFragmentById(R.id.mapPreviewFragment) as? SupportMapFragment
@@ -306,6 +315,18 @@ class CreateReminderActivity : AppCompatActivity(), OnMapReadyCallback {
         buttonCurrentLocation.setOnClickListener {
             // Check permissions and then call companion helper
             ensureLocationPermissionThenSelect()
+        }
+
+        // Setup radius slider listener
+        radiusSlider.addOnChangeListener { _, value, fromUser ->
+            if (fromUser) {
+                selectedRadius = value.toDouble()
+                radiusText.text = "${value.toInt()} meters"
+                // Update map preview if location is selected
+                if (selectedLatitude != null && selectedLongitude != null) {
+                    updateMapPreview(selectedLatitude!!, selectedLongitude!!)
+                }
+            }
         }
     }
 
@@ -410,11 +431,20 @@ class CreateReminderActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun updateMapPreview(latitude: Double, longitude: Double) {
         previewMap?.let { map ->
             try {
-                map.clear() // Clear existing markers
+                map.clear() // Clear existing markers and circles
                 val location = LatLng(latitude, longitude)
                 map.addMarker(MarkerOptions().position(location))
+                
+                // Add radius circle
+                map.addCircle(CircleOptions()
+                    .center(location)
+                    .radius(selectedRadius)
+                    .strokeWidth(2f)
+                    .strokeColor(0x552196F3)
+                    .fillColor(0x332196F3))
+                
                 map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15f))
-                Log.d(TAG, "Map preview updated with location: $latitude, $longitude")
+                Log.d(TAG, "Map preview updated with location: $latitude, $longitude, radius: $selectedRadius")
             } catch (e: Exception) {
                 Log.e(TAG, "Error updating map preview: ${e.message}")
             }
@@ -451,7 +481,8 @@ class CreateReminderActivity : AppCompatActivity(), OnMapReadyCallback {
             if (result.resultCode == RESULT_OK && result.data != null) {
                 selectedLatitude = result.data!!.getDoubleExtra("lat", 0.0)
                 selectedLongitude = result.data!!.getDoubleExtra("lng", 0.0)
-                findViewById<TextView?>(R.id.textSelectedLocation)?.text = "${selectedLatitude}, ${selectedLongitude}"
+                selectedRadius = result.data!!.getDoubleExtra("radius", 100.0)
+                findViewById<TextView?>(R.id.textSelectedLocation)?.text = "${selectedLatitude}, ${selectedLongitude} (${selectedRadius.toInt()}m)"
                 updateMapPreview(selectedLatitude!!, selectedLongitude!!)
             }
         }
@@ -497,7 +528,7 @@ class CreateReminderActivity : AppCompatActivity(), OnMapReadyCallback {
 
         val geofence = Geofence.Builder()
             .setRequestId("reminder_${System.currentTimeMillis()}")
-            .setCircularRegion(latitude, longitude, 150f)
+            .setCircularRegion(latitude, longitude, selectedRadius.toFloat())
             .setExpirationDuration(Geofence.NEVER_EXPIRE)
             .setTransitionTypes(transitionTypes)
             .apply {
@@ -600,39 +631,45 @@ private fun prefillTodayDefaults() {
 
     private fun showDatePicker() {
         val calendar = Calendar.getInstance()
-        val datePickerDialog = DatePickerDialog(
-            this,
-            { _, year, month, dayOfMonth ->
+        val customDatePicker = CustomDatePickerDialog.newInstance(
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        )
+        
+        customDatePicker.setOnDateSetListener(object : CustomDatePickerDialog.OnDateSetListener {
+            override fun onDateSet(year: Int, month: Int, dayOfMonth: Int) {
                 selectedDate = Calendar.getInstance().apply {
                     set(year, month, dayOfMonth)
                 }
                 val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
                 editTextDate.setText(dateFormat.format(selectedDate!!.time))
-            },
-            calendar.get(Calendar.YEAR),
-            calendar.get(Calendar.MONTH),
-            calendar.get(Calendar.DAY_OF_MONTH)
-        )
-        datePickerDialog.show()
+            }
+        })
+        
+        customDatePicker.show(supportFragmentManager, "CustomDatePicker")
     }
 
     private fun showTimePicker() {
         val calendar = Calendar.getInstance()
-        val timePickerDialog = TimePickerDialog(
-            this,
-            { _, hourOfDay, minute ->
+        val customTimePicker = CustomTimePickerDialog.newInstance(
+            calendar.get(Calendar.HOUR_OF_DAY),
+            calendar.get(Calendar.MINUTE),
+            false // Use 12-hour format
+        )
+        
+        customTimePicker.setOnTimeSetListener(object : CustomTimePickerDialog.OnTimeSetListener {
+            override fun onTimeSet(hourOfDay: Int, minute: Int) {
                 selectedTime = Calendar.getInstance().apply {
                     set(Calendar.HOUR_OF_DAY, hourOfDay)
                     set(Calendar.MINUTE, minute)
                 }
                 val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
                 editTextTime.setText(timeFormat.format(selectedTime!!.time))
-            },
-            calendar.get(Calendar.HOUR_OF_DAY),
-            calendar.get(Calendar.MINUTE),
-            true
-        )
-        timePickerDialog.show()
+            }
+        })
+        
+        customTimePicker.show(supportFragmentManager, "CustomTimePicker")
     }
 
     private fun saveReminder() {

@@ -82,6 +82,7 @@ class MapPickerActivity : AppCompatActivity(), OnMapReadyCallback {
                 val result = Intent().apply {
                     putExtra("lat", c.latitude)
                     putExtra("lng", c.longitude)
+                    putExtra("radius", radiusMeters)
                 }
                 setResult(RESULT_OK, result)
                 finish()

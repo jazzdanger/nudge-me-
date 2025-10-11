@@ -33,6 +33,5 @@
         app:tint="@android:color/white"
         app:backgroundTint="@color/blue_500" />
 
-
 </FrameLayout>
 

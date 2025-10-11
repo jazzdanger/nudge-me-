@@ -384,6 +384,46 @@
 
                 </RelativeLayout>
 
+                <!-- Radius Slider Container -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/rounded_background"
+                    android:padding="10dp"
+                    android:layout_marginBottom="10dp"
+                    android:elevation="2dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Location Radius"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorOnSurface"
+                        android:layout_marginBottom="8dp" />
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/radiusSlider"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:valueFrom="50"
+                        android:valueTo="1000"
+                        android:value="100"
+                        android:stepSize="10"
+                        android:layout_marginBottom="8dp" />
+
+                    <TextView
+                        android:id="@+id/radiusText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="100 meters"
+                        android:textSize="12sp"
+                        android:textColor="@color/gray_600"
+                        android:layout_gravity="center_horizontal" />
+
+                </LinearLayout>
+
                 <!-- Trigger Type Selection -->
                 <TextView
                     android:layout_width="match_parent"
