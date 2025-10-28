@@ -84,7 +84,6 @@ class CalendarFragment : Fragment() {
         // Configure Google Sign-In
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestEmail()
-            .requestScopes(com.google.api.services.calendar.CalendarScopes.CALENDAR_READONLY)
             .build()
         
         googleSignInClient = GoogleSignIn.getClient(requireContext(), gso)
@@ -115,7 +114,7 @@ class CalendarFragment : Fragment() {
                 withContext(Dispatchers.IO) {
                     val credential = com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential.usingOAuth2(
                         requireContext(),
-                        Collections.singleton("https://www.googleapis.com/auth/calendar.readonly")
+                        Collections.singleton(com.google.api.services.calendar.CalendarScopes.CALENDAR_READONLY)
                     )
                     credential.selectedAccountName = account.email
                     
