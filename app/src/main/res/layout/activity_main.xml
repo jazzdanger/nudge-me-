@@ -69,27 +69,12 @@
 
         </LinearLayout>
 
-        <!-- Main Content -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerViewReminders"
+        <!-- Fragment Container -->
+        <FrameLayout
+            android:id="@+id/fragmentContainer"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            android:clipToPadding="false"
-            android:padding="16dp" />
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fabAddReminder"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginBottom="20dp"
-            android:src="@drawable/ic_add"
-            app:backgroundTint="@color/blue_500"
-            app:tint="@android:color/white"
-            app:fabSize="normal"
-            app:elevation="8dp"
-            app:borderWidth="0dp" />
+            android:layout_weight="1" />
 
         <com.google.android.material.bottomnavigation.BottomNavigationView
             android:id="@+id/bottomNavigation"

@@ -16,33 +16,22 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import androidx.drawerlayout.widget.DrawerLayout
-import com.example.reminderapp.data.ReminderDatabase
-import com.example.reminderapp.data.ReminderEntity
-import com.example.reminderapp.data.ReminderRepository
+import androidx.fragment.app.Fragment
+import com.example.reminderapp.fragments.CalendarFragment
+import com.example.reminderapp.fragments.HistoryFragment
+import com.example.reminderapp.fragments.HomeFragment
+import com.example.reminderapp.fragments.StatsFragment
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import androidx.appcompat.app.AppCompatDelegate
-import java.text.SimpleDateFormat
-import java.util.*
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var recyclerViewReminders: RecyclerView
     private lateinit var bottomNavigation: BottomNavigationView
-    private lateinit var fabAddReminder: FloatingActionButton
     private lateinit var profileButton: ImageView
-    // Removed notificationButton as per requirement
     private lateinit var permissionLauncher: ActivityResultLauncher<Array<String>>
-    private lateinit var reminderAdapter: ReminderAdapter
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navigationView: NavigationView
-    private lateinit var reminderRepository: ReminderRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,20 +39,17 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
-        // Initialize database
-        val database = ReminderDatabase.getDatabase(this)
-        reminderRepository = ReminderRepository(database.reminderDao())
-
         createNotificationChannel()
         setupPermissionLauncher()
         initializeViews()
-        setupRecyclerView() // Setup adapter first
         setupClickListeners()
         setupBottomNavigation()
         requestFirstLaunchPermissionsIfNeeded()
 
-        // Observe reminders from database
-        observeReminders()
+        // Load default fragment
+        if (savedInstanceState == null) {
+            loadFragment(HomeFragment())
+        }
 
         // Handle window insets for edge-to-edge display without double bottom padding
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content)) { v, insets ->
@@ -74,8 +60,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         Log.d("MainActivity", "MainActivity created")
-
-        // No test reminders - start with empty list
     }
 
     private fun setupPermissionLauncher() {
@@ -141,69 +125,31 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initializeViews() {
-        recyclerViewReminders = findViewById(R.id.recyclerViewReminders)
         bottomNavigation = findViewById(R.id.bottomNavigation)
-        fabAddReminder = findViewById(R.id.fabAddReminder)
         profileButton = findViewById(R.id.profileButton)
         drawerLayout = findViewById(R.id.drawerLayout)
         navigationView = findViewById(R.id.navigationView)
-        // notificationButton removed from layout
         Log.d("MainActivity", "Views initialized")
     }
 
-    private fun setupRecyclerView() {
-        Log.d("MainActivity", "Setting up RecyclerView")
-
-        reminderAdapter = ReminderAdapter(
-            emptyList(),
-            onReminderDeleted = { reminderEntity ->
-                lifecycleScope.launch {
-                    reminderRepository.delete(reminderEntity)
-                    Toast.makeText(this@MainActivity, "Reminder deleted: ${reminderEntity.title}", Toast.LENGTH_SHORT).show()
-                }
-            },
-            onReminderMarkedDone = { reminderEntity ->
-                lifecycleScope.launch {
-                    val updated = reminderEntity.copy(
-                        isCompleted = true,
-                        status = ReminderStatus.COMPLETED
-                    )
-                    reminderRepository.update(updated)
-                    Toast.makeText(this@MainActivity, "Marked done: ${reminderEntity.title}", Toast.LENGTH_SHORT).show()
-                }
-            }
-        )
-        recyclerViewReminders.layoutManager = LinearLayoutManager(this)
-        recyclerViewReminders.adapter = reminderAdapter
-
-        Log.d("MainActivity", "RecyclerView setup complete")
-    }
-
-    private fun observeReminders() {
-        lifecycleScope.launch {
-            reminderRepository.activeReminders.collectLatest { reminders ->
-                Log.d("MainActivity", "Observed ${reminders.size} active reminders from database")
-                reminderAdapter.updateReminders(reminders)
-            }
-        }
+    private fun loadFragment(fragment: Fragment) {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
+            .commit()
     }
 
     private fun setupClickListeners() {
-        fabAddReminder.setOnClickListener {
-            Log.d("MainActivity", "FAB clicked, launching CreateReminderActivity")
-            val intent = Intent(this, CreateReminderActivity::class.java)
-            startActivity(intent)
-        }
-
         profileButton.setOnClickListener {
             drawerLayout.open()
         }
 
-        // notificationButton click listener removed
         navigationView.setNavigationItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.menu_profile -> Toast.makeText(this, "Profile", Toast.LENGTH_SHORT).show()
-                R.id.menu_settings -> Toast.makeText(this, "Settings", Toast.LENGTH_SHORT).show()
+                R.id.menu_settings -> {
+                    val intent = Intent(this, SettingsActivity::class.java)
+                    startActivity(intent)
+                }
                 R.id.menu_notifications -> Toast.makeText(this, "Notifications", Toast.LENGTH_SHORT).show()
                 R.id.menu_about -> Toast.makeText(this, "About", Toast.LENGTH_SHORT).show()
             }
@@ -239,13 +185,19 @@ class MainActivity : AppCompatActivity() {
         bottomNavigation.setOnItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.nav_home -> {
-                    // Already on Home; ensure this activity is shown
-                    startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP))
+                    loadFragment(HomeFragment())
                     true
                 }
                 R.id.nav_today -> {
-                    // Open History screen when History item clicked (uses nav_today id with title "History")
-                    startActivity(Intent(this, HistoryActivity::class.java))
+                    loadFragment(HistoryFragment())
+                    true
+                }
+                R.id.nav_calendar -> {
+                    loadFragment(CalendarFragment())
+                    true
+                }
+                R.id.nav_stats -> {
+                    loadFragment(StatsFragment())
                     true
                 }
                 else -> false

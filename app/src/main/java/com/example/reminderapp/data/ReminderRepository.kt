@@ -10,6 +10,9 @@ class ReminderRepository(private val reminderDao: ReminderDao) {
     // Completed reminders (History)
     val completedReminders: Flow<List<ReminderEntity>> = reminderDao.getCompletedReminders()
 
+    // All reminders (for stats)
+    val allReminders: Flow<List<ReminderEntity>> = reminderDao.getAllReminders()
+
     // Insert a new reminder
     suspend fun insert(reminder: ReminderEntity) {
         reminderDao.insertReminder(reminder)

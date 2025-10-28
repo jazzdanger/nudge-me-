@@ -11,6 +11,9 @@ interface ReminderDao {
     @Query("SELECT * FROM reminders WHERE isCompleted = 1 ORDER BY id DESC") // Or order by dateTime
     fun getCompletedReminders(): Flow<List<ReminderEntity>> // For History Page
 
+    @Query("SELECT * FROM reminders ORDER BY id DESC") // All reminders for stats
+    fun getAllReminders(): Flow<List<ReminderEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertReminder(reminder: ReminderEntity)
 
