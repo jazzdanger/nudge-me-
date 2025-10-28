@@ -6,7 +6,7 @@
     android:layout_margin="8dp"
     app:cardCornerRadius="8dp"
     app:cardElevation="4dp"
-    app:cardBackgroundColor="#2C2C2C">
+    app:cardBackgroundColor="@color/gray_100">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -21,7 +21,7 @@
             android:text="Event Title"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="@android:color/white" />
+            android:textColor="@color/colorOnSurface" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -36,7 +36,7 @@
                 android:layout_weight="1"
                 android:text="Dec 25, 2023"
                 android:textSize="14sp"
-                android:textColor="#9C27B0"
+                android:textColor="@color/purple_500"
                 android:textStyle="bold" />
 
             <TextView
@@ -45,7 +45,7 @@
                 android:layout_height="wrap_content"
                 android:text="2:00 PM"
                 android:textSize="14sp"
-                android:textColor="#9C27B0" />
+                android:textColor="@color/purple_500" />
 
         </LinearLayout>
 
@@ -56,7 +56,7 @@
             android:layout_marginTop="8dp"
             android:text="Event description goes here..."
             android:textSize="14sp"
-            android:textColor="#CCCCCC"
+            android:textColor="@color/gray_600"
             android:maxLines="3"
             android:ellipsize="end" />
 

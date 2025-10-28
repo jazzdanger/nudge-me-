@@ -6,7 +6,7 @@
     android:layout_margin="24dp"
     app:cardCornerRadius="16dp"
     app:cardElevation="8dp"
-    app:cardBackgroundColor="#FF2C2C2C">
+    app:cardBackgroundColor="@color/colorSurface">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -34,7 +34,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Time"
-                android:textColor="@android:color/white"
+                android:textColor="@color/colorOnSurface"
                 android:textSize="20sp"
                 android:textStyle="bold" />
 
@@ -43,7 +43,7 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_close"
-                android:tint="@android:color/white"
+                android:tint="@color/colorOnSurface"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="4dp" />
 
@@ -53,7 +53,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="#FF424242"
+            android:background="@color/gray_300"
             android:layout_marginBottom="16dp" />
 
         <!-- All day toggle -->
@@ -76,7 +76,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="All day"
-                android:textColor="@android:color/white"
+                android:textColor="@color/colorOnSurface"
                 android:textSize="16sp" />
 
             <com.google.android.material.switchmaterial.SwitchMaterial
@@ -100,7 +100,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Today"
-                android:textColor="@android:color/white"
+                android:textColor="@color/colorOnSurface"
                 android:textSize="16sp"
                 android:layout_marginEnd="12dp" />
 
@@ -109,7 +109,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="11:00 am"
-                android:textColor="@android:color/white"
+                android:textColor="@color/colorSurface"
                 android:textSize="14sp"
                 android:background="@drawable/time_pill_background"
                 android:paddingHorizontal="12dp"
@@ -130,14 +130,14 @@
                 android:layout_width="0dp"
                 android:layout_height="120dp"
                 android:layout_weight="1"
-                android:textColor="@android:color/white"
+                android:textColor="@color/colorOnSurface"
                 android:textSize="24sp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text=":"
-                android:textColor="@android:color/white"
+                android:textColor="@color/colorOnSurface"
                 android:textSize="24sp"
                 android:textStyle="bold"
                 android:layout_marginHorizontal="8dp" />
@@ -147,7 +147,7 @@
                 android:layout_width="0dp"
                 android:layout_height="120dp"
                 android:layout_weight="1"
-                android:textColor="@android:color/white"
+                android:textColor="@color/colorOnSurface"
                 android:textSize="24sp" />
 
             <NumberPicker
@@ -155,55 +155,77 @@
                 android:layout_width="0dp"
                 android:layout_height="120dp"
                 android:layout_weight="1"
-                android:textColor="@android:color/white"
+                android:textColor="@color/colorOnSurface"
                 android:textSize="24sp" />
 
         </LinearLayout>
 
         <!-- Quick selection buttons -->
-        <LinearLayout
+        <GridLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center">
+            android:columnCount="2"
+            android:rowCount="2"
+            android:alignmentMode="alignMargins"
+            android:useDefaultMargins="true">
 
             <Button
                 android:id="@+id/btnOneHour"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
+                android:layout_height="48dp"
+                android:layout_columnWeight="1"
                 android:text="1 hour from now"
-                android:textColor="@android:color/white"
+                android:textColor="@color/colorOnPrimary"
                 android:textSize="12sp"
-                android:background="@drawable/quick_button_background"
-                android:paddingVertical="12dp" />
+                android:textAllCaps="false"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:background="@drawable/quick_button_background" />
 
             <Button
                 android:id="@+id/btnSevenAM"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginHorizontal="4dp"
+                android:layout_height="48dp"
+                android:layout_columnWeight="1"
                 android:text="7:00 am"
-                android:textColor="@android:color/white"
+                android:textColor="@color/colorOnPrimary"
                 android:textSize="12sp"
-                android:background="@drawable/quick_button_background"
-                android:paddingVertical="12dp" />
+                android:textAllCaps="false"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:background="@drawable/quick_button_background" />
 
             <Button
                 android:id="@+id/btnThreePM"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="8dp"
+                android:layout_height="48dp"
+                android:layout_columnWeight="1"
                 android:text="3:00 pm"
-                android:textColor="@android:color/white"
+                android:textColor="@color/colorOnPrimary"
                 android:textSize="12sp"
-                android:background="@drawable/quick_button_background"
-                android:paddingVertical="12dp" />
+                android:textAllCaps="false"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:background="@drawable/quick_button_background" />
 
-        </LinearLayout>
+            <Button
+                android:id="@+id/btnConfirmTime"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_columnWeight="1"
+                android:text="Set time"
+                android:textColor="@color/colorOnPrimary"
+                android:textSize="12sp"
+                android:textAllCaps="false"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:background="@drawable/quick_button_background" />
+
+        </GridLayout>
 
     </LinearLayout>
 

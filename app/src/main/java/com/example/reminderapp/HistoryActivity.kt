@@ -37,9 +37,10 @@ class HistoryActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        historyAdapter = HistoryAdapter { reminderEntity ->
-            restoreReminderToActiveList(reminderEntity)
-        }
+        historyAdapter = HistoryAdapter(
+            onReminderRestoreClicked = { reminderEntity -> restoreReminderToActiveList(reminderEntity) },
+            onReminderDeleteClicked = { reminderEntity -> deleteReminderPermanently(reminderEntity) }
+        )
         recyclerViewHistory.apply {
             adapter = historyAdapter
             layoutManager = LinearLayoutManager(this@HistoryActivity)
@@ -98,6 +99,13 @@ class HistoryActivity : AppCompatActivity() {
                 "'${reminderEntity.title}' restored to active list.",
                 Toast.LENGTH_SHORT
             ).show()
+        }
+    }
+
+    private fun deleteReminderPermanently(reminderEntity: ReminderEntity) {
+        lifecycleScope.launch {
+            reminderRepository.delete(reminderEntity)
+            Toast.makeText(this@HistoryActivity, "Deleted '${reminderEntity.title}'", Toast.LENGTH_SHORT).show()
         }
     }
 }

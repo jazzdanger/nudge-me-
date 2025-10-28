@@ -38,20 +38,18 @@ class CalendarEventsAdapter : RecyclerView.Adapter<CalendarEventsAdapter.EventVi
         private val textViewDescription: TextView = itemView.findViewById(R.id.textViewEventDescription)
 
         fun bind(event: Event) {
-            textViewTitle.text = event.summary ?: "No Title"
+            textViewTitle.text = event.summary ?: "(No title)"
             
             val start = event.start
             val end = event.end
             
             when {
                 start?.dateTime != null -> {
-                    // All-day event
                     val startDate = Date(start.dateTime.value)
                     textViewDate.text = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(startDate)
-                    textViewTime.text = "All day"
+                    textViewTime.text = SimpleDateFormat("h:mm a", Locale.getDefault()).format(startDate)
                 }
                 start?.date != null -> {
-                    // Date-only event
                     val startDate = Date(start.date.value)
                     textViewDate.text = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(startDate)
                     textViewTime.text = "All day"

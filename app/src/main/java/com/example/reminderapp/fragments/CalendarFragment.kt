@@ -23,11 +23,15 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.calendar.Calendar
 import com.google.api.services.calendar.model.Event
 import com.google.api.services.calendar.model.Events
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import com.example.reminderapp.work.CalendarSyncWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -81,9 +85,10 @@ class CalendarFragment : Fragment() {
     }
 
     private fun setupGoogleCalendar() {
-        // Configure Google Sign-In
+        // Configure Google Sign-In with Calendar readonly scope
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestEmail()
+            .requestScopes(com.google.android.gms.common.api.Scope(com.google.api.services.calendar.CalendarScopes.CALENDAR_READONLY))
             .build()
         
         googleSignInClient = GoogleSignIn.getClient(requireContext(), gso)
@@ -146,15 +151,31 @@ class CalendarFragment : Fragment() {
                     now.add(java.util.Calendar.MONTH, 1)
                     val timeMax = now.time
 
-                    val events: Events = calendarService?.events()
-                        ?.list("primary")
-                        ?.setTimeMin(com.google.api.client.util.DateTime(timeMin))
-                        ?.setTimeMax(com.google.api.client.util.DateTime(timeMax))
-                        ?.setOrderBy("startTime")
-                        ?.setSingleEvents(true)
-                        ?.execute() ?: return@withContext
+                    val service = calendarService ?: return@withContext
+                    val primary = service.events()
+                        .list("primary")
+                        .setTimeMin(com.google.api.client.util.DateTime(timeMin))
+                        .setTimeMax(com.google.api.client.util.DateTime(timeMax))
+                        .setOrderBy("startTime")
+                        .setSingleEvents(true)
+                        .execute()
+                        .items ?: emptyList()
 
-                    val eventList = events.items ?: emptyList()
+                    val birthdayList = try {
+                        val calendars = service.calendarList().list().execute().items ?: emptyList()
+                        val bday = calendars.firstOrNull { it.summary?.contains("Birthday", true) == true }
+                        if (bday != null) {
+                            service.events().list(bday.id)
+                                .setTimeMin(com.google.api.client.util.DateTime(timeMin))
+                                .setTimeMax(com.google.api.client.util.DateTime(timeMax))
+                                .setOrderBy("startTime")
+                                .setSingleEvents(true)
+                                .execute()
+                                .items ?: emptyList()
+                        } else emptyList()
+                    } catch (_: Exception) { emptyList() }
+
+                    val eventList = primary + birthdayList
 
                     withContext(Dispatchers.Main) {
                         showLoading(false)
@@ -218,10 +239,17 @@ class CalendarFragment : Fragment() {
                         buttonSignIn.visibility = View.GONE
                         textViewStatus.visibility = View.GONE
                         initializeCalendarService(account)
+
+                        // Trigger immediate background sync
+                        WorkManager.getInstance(requireContext()).enqueue(
+                            OneTimeWorkRequestBuilder<CalendarSyncWorker>().build()
+                        )
                     }
                 } catch (e: ApiException) {
-                    Log.e("CalendarFragment", "Sign-in failed", e)
-                    showError("Sign-in failed: ${e.message}")
+                    val code = e.statusCode
+                    val codeString = GoogleSignInStatusCodes.getStatusCodeString(code)
+                    Log.e("CalendarFragment", "Sign-in failed ($code: $codeString)", e)
+                    showError("Sign-in failed ($code: $codeString)")
                 }
             }
         }

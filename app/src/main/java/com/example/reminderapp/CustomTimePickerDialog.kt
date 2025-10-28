@@ -124,6 +124,7 @@ class CustomTimePickerDialog : DialogFragment() {
         val btnOneHour = view.findViewById<Button>(R.id.btnOneHour)
         val btnSevenAM = view.findViewById<Button>(R.id.btnSevenAM)
         val btnThreePM = view.findViewById<Button>(R.id.btnThreePM)
+        val btnConfirm = view.findViewById<Button>(R.id.btnConfirmTime)
         
         btnOneHour.setOnClickListener {
             val calendar = Calendar.getInstance()
@@ -145,6 +146,20 @@ class CustomTimePickerDialog : DialogFragment() {
             calendar.set(Calendar.HOUR_OF_DAY, 15)
             calendar.set(Calendar.MINUTE, 0)
             setTimeFromCalendar(calendar)
+            dismiss()
+        }
+
+        btnConfirm.setOnClickListener {
+            val hourPicker = view.findViewById<NumberPicker>(R.id.hourPicker)
+            val minutePicker = view.findViewById<NumberPicker>(R.id.minutePicker)
+            val ampmPicker = view.findViewById<NumberPicker>(R.id.ampmPicker)
+            val hourOfDay = if (is24HourFormat) {
+                hourPicker.value
+            } else {
+                val base = if (hourPicker.value == 12) 0 else hourPicker.value
+                if (ampmPicker.value == 0) base else base + 12
+            }
+            listener?.onTimeSet(hourOfDay, minutePicker.value)
             dismiss()
         }
     }

@@ -98,6 +98,9 @@ dependencies {
     implementation("com.google.apis:google-api-services-calendar:v3-rev20231123-2.0.0")
     implementation("com.google.api-client:google-api-client-android:2.2.0")
 
+    // WorkManager for background sync
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
+
     // Fragment navigation
     implementation("androidx.fragment:fragment-ktx:1.6.2")
     implementation("androidx.navigation:navigation-fragment-ktx:2.7.6")

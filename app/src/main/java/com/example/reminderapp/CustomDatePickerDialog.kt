@@ -86,6 +86,7 @@ class CustomDatePickerDialog : DialogFragment() {
         val btnToday = view.findViewById<Button>(R.id.btnToday)
         val btnTomorrow = view.findViewById<Button>(R.id.btnTomorrow)
         val btnNextWeek = view.findViewById<Button>(R.id.btnNextWeek)
+        val btnConfirm = view.findViewById<Button>(R.id.btnConfirmDate)
         
         btnToday.setOnClickListener {
             val today = Calendar.getInstance()
@@ -104,6 +105,12 @@ class CustomDatePickerDialog : DialogFragment() {
             val nextWeek = Calendar.getInstance()
             nextWeek.add(Calendar.WEEK_OF_YEAR, 1)
             setDateFromCalendar(nextWeek)
+            dismiss()
+        }
+
+        btnConfirm.setOnClickListener {
+            val datePicker = view.findViewById<DatePicker>(R.id.datePicker)
+            listener?.onDateSet(datePicker.year, datePicker.month, datePicker.dayOfMonth)
             dismiss()
         }
     }

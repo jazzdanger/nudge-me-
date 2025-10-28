@@ -7,7 +7,7 @@
     android:layout_marginBottom="8dp"
     app:cardCornerRadius="8dp"
     app:cardElevation="2dp"
-    app:cardBackgroundColor="@android:color/white">
+    app:cardBackgroundColor="@color/gray_100">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -61,16 +61,29 @@
 
         </LinearLayout>
 
-        <!-- Tick Box / Status Icon -->
-        <ImageView
-            android:id="@+id/iconStatus"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:padding="4dp"
-            android:src="@drawable/ic_circle_empty"
-            app:tint="@color/blue_500"
-            android:background="@drawable/circle_background"
-            android:contentDescription="Mark as complete" />
+        <!-- Action buttons: delete permanently and restore -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end">
+
+            <ImageView
+                android:id="@+id/buttonDelete"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:padding="6dp"
+                android:src="@drawable/ic_delete"
+                android:contentDescription="Delete permanently" />
+
+            <ImageView
+                android:id="@+id/buttonRestore"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:padding="6dp"
+                android:src="@drawable/ic_home"
+                android:contentDescription="Restore to home" />
+        </LinearLayout>
 
     </LinearLayout>
 

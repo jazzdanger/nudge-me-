@@ -25,6 +25,9 @@ import com.example.reminderapp.fragments.StatsFragment
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import com.example.reminderapp.work.CalendarSyncWorker
 
 class MainActivity : AppCompatActivity() {
     private lateinit var bottomNavigation: BottomNavigationView
@@ -193,6 +196,10 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_calendar -> {
+                    // Trigger an immediate calendar sync when Calendar tab is selected
+                    WorkManager.getInstance(this).enqueue(
+                        OneTimeWorkRequestBuilder<CalendarSyncWorker>().build()
+                    )
                     loadFragment(CalendarFragment())
                     true
                 }
