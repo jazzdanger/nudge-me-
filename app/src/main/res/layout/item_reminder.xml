@@ -7,7 +7,7 @@
     android:layout_marginBottom="8dp"
     app:cardCornerRadius="8dp"
     app:cardElevation="2dp"
-    app:cardBackgroundColor="@color/gray_100">
+    app:cardBackgroundColor="?attr/colorSurfaceVariant">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -45,32 +45,38 @@
                 android:id="@+id/textTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Team Meeting"
+                android:text="Reminder Title"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="@android:color/black" />
+                android:textColor="?attr/colorOnSurface" />
 
             <TextView
                 android:id="@+id/textDateTime"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Today, 3:00 PM"
+                android:text="Date &amp; Time"
                 android:textSize="14sp"
-                android:textColor="@color/gray_600"
+                android:textColor="?attr/colorOnSurfaceVariant"
                 android:layout_marginTop="2dp" />
 
         </LinearLayout>
 
-        <!-- Tick Box - enhanced visibility -->
-        <ImageView
-            android:id="@+id/iconStatus"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:padding="4dp"
-            android:src="@drawable/ic_circle_empty"
-            app:tint="@color/blue_500"
-            android:background="@drawable/circle_background"
-            android:contentDescription="Mark as complete" />
+        <!-- Trailing action container styled like history item actions -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end">
+
+            <ImageView
+                android:id="@+id/iconStatus"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:padding="6dp"
+                android:src="@drawable/ic_circle_empty"
+                android:contentDescription="Mark as complete" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

@@ -3,62 +3,89 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
+    android:layout_marginBottom="8dp"
     app:cardCornerRadius="8dp"
-    app:cardElevation="4dp"
-    app:cardBackgroundColor="@color/gray_100">
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="?attr/colorSurfaceVariant">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical">
 
-        <TextView
-            android:id="@+id/textViewEventTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Event Title"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="@color/colorOnSurface" />
+        <!-- Colored Circular Icon -->
+        <FrameLayout
+            android:id="@+id/iconContainer"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="12dp"
+            android:background="@drawable/circle_blue"
+            android:gravity="center">
+
+            <ImageView
+                android:id="@+id/iconReminder"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="4dp"
+                android:src="@drawable/ic_calendar"
+                app:tint="@android:color/white" />
+
+        </FrameLayout>
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="8dp">
+            android:layout_weight="1"
+            android:orientation="vertical">
 
             <TextView
-                android:id="@+id/textViewEventDate"
-                android:layout_width="0dp"
+                android:id="@+id/textViewEventTitle"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Dec 25, 2023"
-                android:textSize="14sp"
-                android:textColor="@color/purple_500"
-                android:textStyle="bold" />
+                android:text="Event Title"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnSurface" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="2dp">
+
+                <TextView
+                    android:id="@+id/textViewEventDate"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Dec 25, 2023"
+                    android:textSize="14sp"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+
+                <TextView
+                    android:id="@+id/textViewEventTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="2:00 PM"
+                    android:textSize="14sp"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+
+            </LinearLayout>
 
             <TextView
-                android:id="@+id/textViewEventTime"
-                android:layout_width="wrap_content"
+                android:id="@+id/textViewEventDescription"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="2:00 PM"
+                android:layout_marginTop="2dp"
+                android:text="Event description goes here..."
                 android:textSize="14sp"
-                android:textColor="@color/purple_500" />
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:maxLines="3"
+                android:ellipsize="end" />
 
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/textViewEventDescription"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Event description goes here..."
-            android:textSize="14sp"
-            android:textColor="@color/gray_600"
-            android:maxLines="3"
-            android:ellipsize="end" />
 
     </LinearLayout>
 
