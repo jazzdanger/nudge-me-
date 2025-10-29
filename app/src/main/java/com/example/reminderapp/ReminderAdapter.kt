@@ -46,7 +46,8 @@ class ReminderAdapter(
         holder.textTitle.text = reminder.title
         holder.textDateTime.text = reminder.dateTime
 
-        holder.itemView.setBackgroundResource(android.R.color.transparent)
+    // Let the CardView defined in the layout control its background and elevation
+    // (Removing a forced transparent background so the card's lifted grey surface shows)
 
         // Status icon
         when (reminder.status) {

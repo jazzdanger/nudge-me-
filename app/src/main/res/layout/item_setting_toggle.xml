@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="?android:attr/selectableItemBackground">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/settingToggleTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Water Reminders"
+            android:textAppearance="?attr/textAppearanceListItem"
+            android:textColor="@color/colorOnSurface" />
+
+        <Switch
+            android:id="@+id/settingToggleSwitch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="false" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/settingToggleDescription"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Get a reminder to hydrate every 2 hours"
+        android:textAppearance="?attr/textAppearanceCaption"
+        android:textColor="@color/colorOnSurface"
+        android:paddingTop="4dp" />
+
+</LinearLayout>

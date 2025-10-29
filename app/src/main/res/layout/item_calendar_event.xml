@@ -6,7 +6,8 @@
     android:layout_marginBottom="8dp"
     app:cardCornerRadius="8dp"
     app:cardElevation="2dp"
-    app:cardBackgroundColor="?attr/colorSurfaceVariant">
+    app:cardBackgroundColor="@color/colorSurface">
+    <!-- Use explicit surface color so dark-mode surface matches other item cards -->
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -25,7 +26,7 @@
             android:gravity="center">
 
             <ImageView
-                android:id="@+id/iconReminder"
+                android:id="@+id/iconType"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:padding="4dp"
@@ -33,6 +34,20 @@
                 app:tint="@android:color/white" />
 
         </FrameLayout>
+
+        <!-- Type Badge (if needed) -->
+        <TextView
+            android:id="@+id/textViewType"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/pill_background"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="2dp"
+            android:text="Event"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="12sp"
+            android:visibility="gone" />
 
         <LinearLayout
             android:layout_width="0dp"

@@ -5,17 +5,22 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.google.api.services.calendar.model.Event
+import com.example.reminderapp.R
+import com.example.reminderapp.models.CalendarItem
 import java.text.SimpleDateFormat
 import java.util.*
 
 class CalendarEventsAdapter : RecyclerView.Adapter<CalendarEventsAdapter.EventViewHolder>() {
-    private var events: List<Event> = emptyList()
+    private var items: List<CalendarItem> = emptyList()
     private val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
     private val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
 
-    fun updateEvents(newEvents: List<Event>) {
-        events = newEvents
+    fun updateEvents(newItems: List<CalendarItem>) {
+        items = newItems.sortedWith(Comparator { a, b ->
+            val av = a.startMillis ?: Long.MAX_VALUE
+            val bv = b.startMillis ?: Long.MAX_VALUE
+            av.compareTo(bv)
+        })
         notifyDataSetChanged()
     }
 
@@ -26,41 +31,61 @@ class CalendarEventsAdapter : RecyclerView.Adapter<CalendarEventsAdapter.EventVi
     }
 
     override fun onBindViewHolder(holder: EventViewHolder, position: Int) {
-        holder.bind(events[position])
+        holder.bind(items[position])
     }
 
-    override fun getItemCount(): Int = events.size
+    override fun getItemCount(): Int = items.size
 
     class EventViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val textViewTitle: TextView = itemView.findViewById(R.id.textViewEventTitle)
         private val textViewDate: TextView = itemView.findViewById(R.id.textViewEventDate)
         private val textViewTime: TextView = itemView.findViewById(R.id.textViewEventTime)
         private val textViewDescription: TextView = itemView.findViewById(R.id.textViewEventDescription)
+        private val iconContainer: View = itemView.findViewById(R.id.iconContainer)
+        private val iconType: android.widget.ImageView = itemView.findViewById(R.id.iconType)
+        private val textViewType: TextView = itemView.findViewById(R.id.textViewType)
 
-        fun bind(event: Event) {
-            textViewTitle.text = event.summary ?: "(No title)"
-            
-            val start = event.start
-            val end = event.end
-            
-            when {
-                start?.dateTime != null -> {
-                    val startDate = Date(start.dateTime.value)
-                    textViewDate.text = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(startDate)
-                    textViewTime.text = SimpleDateFormat("h:mm a", Locale.getDefault()).format(startDate)
+        fun bind(item: CalendarItem) {
+            textViewTitle.text = item.title
+
+            val startMs = item.startMillis
+            if (startMs != null) {
+                val startDate = Date(startMs)
+                textViewDate.text = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(startDate)
+                textViewTime.text = SimpleDateFormat("h:mm a", Locale.getDefault()).format(startDate)
+            } else {
+                textViewDate.text = "No date"
+                textViewTime.text = if (item.isAllDay) "All day" else ""
+            }
+
+            textViewDescription.text = item.description ?: ""
+
+            // Set type-specific UI
+            when (item.type) {
+                CalendarItem.ItemType.TASK -> {
+                    iconContainer.setBackgroundResource(R.drawable.circle_task)
+                    iconType.setImageResource(R.drawable.ic_calendar)  // TODO: Add task icon
+                    textViewType.apply {
+                        text = "Task"
+                        visibility = View.VISIBLE
+                    }
                 }
-                start?.date != null -> {
-                    val startDate = Date(start.date.value)
-                    textViewDate.text = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(startDate)
-                    textViewTime.text = "All day"
+                CalendarItem.ItemType.BIRTHDAY -> {
+                    iconContainer.setBackgroundResource(R.drawable.circle_birthday)
+                    iconType.setImageResource(R.drawable.ic_calendar)  // TODO: Add cake/gift icon
+                    textViewType.apply {
+                        text = "Birthday"
+                        visibility = View.VISIBLE
+                    }
                 }
                 else -> {
-                    textViewDate.text = "No date"
-                    textViewTime.text = ""
+                    iconContainer.setBackgroundResource(R.drawable.circle_blue)
+                    iconType.setImageResource(R.drawable.ic_calendar)
+                    textViewType.visibility = View.GONE
                 }
             }
-            
-            textViewDescription.text = event.description ?: ""
         }
     }
+
+    // no-op
 }

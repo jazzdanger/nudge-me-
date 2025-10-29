@@ -12,6 +12,11 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.ActivityResultLauncher
+import android.Manifest
+import android.provider.Settings
+import android.net.Uri
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import java.util.Calendar
 
@@ -35,12 +40,48 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // Foreground location (fine/coarse) launcher
+    private val requestForegroundLocationLauncher: ActivityResultLauncher<Array<String>> =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
+            val granted = results.entries.any { it.value }
+            if (granted) {
+                // If API >= Q, request background location
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    requestBackgroundLocationLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                }
+            } else {
+                Toast.makeText(this, "Location permission denied. Some features may not work.", Toast.LENGTH_LONG).show()
+            }
+        }
+
+    // Background location launcher
+    private val requestBackgroundLocationLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                Toast.makeText(this, "Background location granted", Toast.LENGTH_SHORT).show()
+            } else {
+                // Guide user to settings for "All the time"
+                AlertDialog.Builder(this)
+                    .setTitle("Allow all the time")
+                    .setMessage("To receive location reminders while the app is not running, please allow 'All the time' in App settings.")
+                    .setPositiveButton("Open settings") { _, _ ->
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                        intent.data = Uri.fromParts("package", packageName, null)
+                        startActivity(intent)
+                    }
+                    .setNegativeButton("Not now", null)
+                    .show()
+            }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         // Request notification permission as soon as the app starts
         askNotificationPermission()
+        // Also request location permissions (foreground then background) at first run
+        askLocationPermissionsAtStartup()
 
         // Initialize UI components from the layout file
         editTextReminder = findViewById(R.id.editTextReminder)
@@ -68,6 +109,33 @@ class MainActivity : AppCompatActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    private fun askLocationPermissionsAtStartup() {
+        // If foreground location not granted, request it. If granted, immediately request background when supported.
+        val fine = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) else android.content.pm.PackageManager.PERMISSION_GRANTED
+        val coarse = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) else android.content.pm.PackageManager.PERMISSION_GRANTED
+
+        if (fine != android.content.pm.PackageManager.PERMISSION_GRANTED && coarse != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            // Request foreground permissions (fine/coarse) together
+            requestForegroundLocationLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+        } else {
+            // Foreground already granted, request background if needed
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val background = checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                if (background != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    // Show brief rationale then request
+                    AlertDialog.Builder(this)
+                        .setTitle("Background location")
+                        .setMessage("Allowing background location lets the app trigger location reminders even when the app isn't open. Please allow 'All the time' on the next screen.")
+                        .setPositiveButton("Continue") { _, _ ->
+                            requestBackgroundLocationLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                        }
+                        .setNegativeButton("Not now", null)
+                        .show()
+                }
             }
         }
     }

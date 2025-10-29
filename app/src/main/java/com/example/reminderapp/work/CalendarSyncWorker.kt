@@ -62,9 +62,9 @@ class CalendarSyncWorker(
                 .execute()
                 .items.orEmpty()
 
-            // Try to find Birthdays calendar and fetch
+            // Try to find Birthdays calendar and Tasks calendar and fetch
+            val list = service.calendarList().list().execute()
             val birthdayEvents = try {
-                val list = service.calendarList().list().execute()
                 val bday = list.items?.firstOrNull { it.summary?.contains("Birthday", true) == true }
                 if (bday != null) {
                     service.events().list(bday.id)
@@ -80,7 +80,23 @@ class CalendarSyncWorker(
                 emptyList()
             }
 
-            val all = primaryEvents + birthdayEvents
+            val tasksEvents = try {
+                val tasksCal = list.items?.firstOrNull { it.summary?.contains("Tasks", true) == true }
+                if (tasksCal != null) {
+                    service.events().list(tasksCal.id)
+                        .setTimeMin(DateTime(timeMin))
+                        .setTimeMax(DateTime(timeMax))
+                        .setOrderBy("startTime")
+                        .setSingleEvents(true)
+                        .execute()
+                        .items.orEmpty()
+                } else emptyList()
+            } catch (e: Exception) {
+                Log.w("CalendarSyncWorker", "Tasks calendar not available: ${e.message}")
+                emptyList()
+            }
+
+            val all = primaryEvents + birthdayEvents + tasksEvents
             Log.d("CalendarSyncWorker", "Fetched ${all.size} events (including birthdays)")
 
             // Schedule alarms: at start time, and 1 hour before if possible
