@@ -216,7 +216,9 @@
                     android:layout_marginEnd="8dp"
                     android:layout_marginBottom="8dp"
                     android:text="Mon"
-                    style="@style/Widget.Material3.Chip.Filter" />
+                    android:textColor="@color/chip_text_color_selector"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    app:chipBackgroundColor="@color/chip_bg_selector" />
 
                 <!-- Tuesday -->
                 <com.google.android.material.chip.Chip
@@ -226,7 +228,9 @@
                     android:layout_marginEnd="8dp"
                     android:layout_marginBottom="8dp"
                     android:text="Tue"
-                    style="@style/Widget.Material3.Chip.Filter" />
+                    android:textColor="@color/chip_text_color_selector"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    app:chipBackgroundColor="@color/chip_bg_selector" />
 
                 <!-- Wednesday -->
                 <com.google.android.material.chip.Chip
@@ -236,7 +240,9 @@
                     android:layout_marginEnd="8dp"
                     android:layout_marginBottom="8dp"
                     android:text="Wed"
-                    style="@style/Widget.Material3.Chip.Filter" />
+                    android:textColor="@color/chip_text_color_selector"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    app:chipBackgroundColor="@color/chip_bg_selector" />
 
                 <!-- Thursday -->
                 <com.google.android.material.chip.Chip
@@ -246,7 +252,9 @@
                     android:layout_marginEnd="8dp"
                     android:layout_marginBottom="8dp"
                     android:text="Thu"
-                    style="@style/Widget.Material3.Chip.Filter" />
+                    android:textColor="@color/chip_text_color_selector"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    app:chipBackgroundColor="@color/chip_bg_selector" />
 
             </LinearLayout>
 
@@ -264,7 +272,9 @@
                     android:layout_marginEnd="8dp"
                     android:layout_marginBottom="8dp"
                     android:text="Fri"
-                    style="@style/Widget.Material3.Chip.Filter" />
+                    android:textColor="@color/chip_text_color_selector"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    app:chipBackgroundColor="@color/chip_bg_selector" />
 
                 <!-- Saturday -->
                 <com.google.android.material.chip.Chip
@@ -274,7 +284,9 @@
                     android:layout_marginEnd="8dp"
                     android:layout_marginBottom="8dp"
                     android:text="Sat"
-                    style="@style/Widget.Material3.Chip.Filter" />
+                    android:textColor="@color/chip_text_color_selector"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    app:chipBackgroundColor="@color/chip_bg_selector" />
 
                 <!-- Sunday -->
                 <com.google.android.material.chip.Chip
@@ -284,7 +296,9 @@
                     android:layout_marginEnd="8dp"
                     android:layout_marginBottom="8dp"
                     android:text="Sun"
-                    style="@style/Widget.Material3.Chip.Filter" />
+                    android:textColor="@color/chip_text_color_selector"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    app:chipBackgroundColor="@color/chip_bg_selector" />
 
             </LinearLayout>
 

@@ -22,6 +22,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
+        app:backgroundTint="@null"
         android:background="@drawable/button_oval_purple"
         android:text="Sign Out"
         android:textColor="@android:color/white"

@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/black">
+    android:background="@color/colorSurface">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewEvents"
@@ -10,7 +11,7 @@
         android:layout_height="match_parent"
         android:padding="16dp"
         android:clipToPadding="false"
-        android:background="@android:color/black" />
+        android:background="@color/colorSurface" />
 
     <ProgressBar
         android:id="@+id/progressBar"
@@ -42,17 +43,18 @@
         <Button
             android:id="@+id/buttonSignIn"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:background="@drawable/button_oval_purple"
+            android:backgroundTint="@null"
+            app:backgroundTint="@null"
             android:fontFamily="serif"
             android:paddingStart="24dp"
             android:paddingTop="12dp"
             android:paddingEnd="24dp"
             android:paddingBottom="12dp"
             android:text="Sign in to Google"
-            android:textColor="@android:color/white"
-             />
+            android:textColor="@android:color/white" />
 
     </LinearLayout>
 

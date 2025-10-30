@@ -30,4 +30,8 @@
     <color name="purple_500">#9C27B0</color>
     <color name="light_green">#C8E6C9</color>
     <color name="default_text_color">#000000</color> <!-- Your default black -->
+    <!-- Button specific colors -->
+    <color name="button_purple">#833FEB</color>
+    <color name="button_purple_pressed">#5523A7</color>
+    <color name="quick_button_color">#FF424242</color>
 </resources>

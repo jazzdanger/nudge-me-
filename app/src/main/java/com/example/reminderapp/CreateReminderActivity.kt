@@ -31,6 +31,7 @@ import com.google.android.material.slider.Slider
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.android.gms.maps.model.CircleOptions
 import com.google.android.material.chip.Chip
+import androidx.core.content.ContextCompat
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.ImageButton
@@ -235,6 +236,19 @@ class CreateReminderActivity : AppCompatActivity(), OnMapReadyCallback {
         chipSaturday = findViewById(R.id.chipSaturday)
         chipSunday = findViewById(R.id.chipSunday)
 
+        // Ensure chips are checkable at runtime (some Material versions may not accept app:checkable in XML)
+        val chips = listOf(chipMonday, chipTuesday, chipWednesday, chipThursday, chipFriday, chipSaturday, chipSunday)
+        chips.forEach { chip ->
+            chip.isCheckable = true
+            // Apply the ColorStateList selectors explicitly to ensure the checked state changes the visuals
+            ContextCompat.getColorStateList(this, R.color.chip_bg_selector)?.let { csl ->
+                chip.chipBackgroundColor = csl
+            }
+            ContextCompat.getColorStateList(this, R.color.chip_text_color_selector)?.let { tsl ->
+                chip.setTextColor(tsl)
+            }
+        }
+
         // Initialize trigger type radio buttons
         radioGroupTriggerType = findViewById(R.id.radioGroupTriggerType)
         radioEnterLocation = findViewById(R.id.radioEnterLocation)
@@ -355,11 +369,40 @@ class CreateReminderActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun toggleDaySelection(chip: Chip, dayOfWeek: Int) {
+        // Toggle checked state
         chip.isChecked = !chip.isChecked
+
+        // Maintain selectedDays set
         if (chip.isChecked) {
             selectedDays.add(dayOfWeek)
         } else {
             selectedDays.remove(dayOfWeek)
+        }
+
+        // Force visual update for chips that may not pick up ColorStateList reliably
+        updateChipVisual(chip, chip.isChecked)
+    }
+
+    private fun updateChipVisual(chip: Chip, checked: Boolean) {
+        try {
+            val bgDrawable = if (checked) {
+                ContextCompat.getDrawable(this, R.drawable.chip_bg_checked)
+            } else {
+                ContextCompat.getDrawable(this, R.drawable.chip_bg_unchecked)
+            }
+
+            // Apply drawable directly to the Chip's background to override theme styles
+            chip.background = bgDrawable
+
+            // Update text color explicitly
+            val textColor = if (checked) R.color.colorOnPrimary else R.color.colorOnSurface
+            chip.setTextColor(ContextCompat.getColor(this, textColor))
+
+            // Force a layout refresh
+            chip.invalidate()
+            chip.requestLayout()
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to update chip visual: ${e.message}")
         }
     }
 

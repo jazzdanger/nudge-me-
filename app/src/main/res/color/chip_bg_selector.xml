@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Checked: use primary blue -->
+    <item android:color="@color/blue_500" android:state_checked="true" />
+    <!-- Default: transparent -->
+    <item android:color="@android:color/transparent" />
+</selector>
