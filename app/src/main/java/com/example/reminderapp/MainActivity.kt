@@ -19,6 +19,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import com.example.reminderapp.fragments.CalendarFragment
+import com.example.reminderapp.fragments.ChecklistFragment
 import com.example.reminderapp.fragments.HistoryFragment
 import com.example.reminderapp.fragments.HomeFragment
 import com.example.reminderapp.fragments.StatsFragment
@@ -148,13 +149,11 @@ class MainActivity : AppCompatActivity() {
 
         navigationView.setNavigationItemSelectedListener { item ->
             when (item.itemId) {
-                R.id.menu_profile -> Toast.makeText(this, "Profile", Toast.LENGTH_SHORT).show()
                 R.id.menu_settings -> {
                     val intent = Intent(this, SettingsActivity::class.java)
                     startActivity(intent)
                 }
-                R.id.menu_notifications -> Toast.makeText(this, "Notifications", Toast.LENGTH_SHORT).show()
-                R.id.menu_about -> Toast.makeText(this, "About", Toast.LENGTH_SHORT).show()
+                else -> Toast.makeText(this, "Unknown action", Toast.LENGTH_SHORT).show()
             }
             drawerLayout.close()
             true
@@ -205,6 +204,10 @@ class MainActivity : AppCompatActivity() {
                 }
                 R.id.nav_stats -> {
                     loadFragment(StatsFragment())
+                    true
+                }
+                R.id.nav_checklist -> {
+                    loadFragment(ChecklistFragment())
                     true
                 }
                 else -> false

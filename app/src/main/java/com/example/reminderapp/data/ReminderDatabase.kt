@@ -8,14 +8,15 @@ import androidx.room.TypeConverters
 import com.example.reminderapp.data.ReminderEntity
 
 @Database(
-    entities = [ReminderEntity::class],
-    version = 3, // Incremented to match schema changes
-    exportSchema = true // Recommended to track database schema
+    entities = [ReminderEntity::class, ChecklistListEntity::class, ChecklistItemEntity::class],
+    version = 4,
+    exportSchema = true
 )
 @TypeConverters(Converters::class) // Needed for ReminderStatus or other custom types
 abstract class ReminderDatabase : RoomDatabase() {
 
     abstract fun reminderDao(): ReminderDao
+    abstract fun checklistDao(): ChecklistDao
 
     companion object {
         @Volatile

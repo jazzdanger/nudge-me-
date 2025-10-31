@@ -16,4 +16,8 @@
         android:id="@+id/nav_stats"
         android:icon="@drawable/ic_bar_chart"
         android:title="Stats" />
+    <item
+        android:id="@+id/nav_checklist"
+        android:icon="@drawable/ic_checklist"
+        android:title="Checklist" />
 </menu> 

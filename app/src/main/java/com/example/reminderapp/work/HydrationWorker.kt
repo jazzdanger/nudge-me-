@@ -21,9 +21,13 @@ class HydrationWorker(appContext: Context, params: WorkerParameters) : Coroutine
         try {
             Log.d(TAG, "HydrationWorker triggered - sending hydration notification")
 
-            // Reuse AlarmReciver's notification logic by calling its helper
+            // Reuse AlarmReciver's logic with explicit water message
             val receiver = AlarmReciver()
-            receiver.onReceive(applicationContext, Intent())
+            val intent = Intent().apply {
+                putExtra("title", "Hydration Reminder")
+                putExtra("notes", "Heyy, it's time to drink water")
+            }
+            receiver.onReceive(applicationContext, intent)
 
             return Result.success()
         } catch (e: Exception) {
