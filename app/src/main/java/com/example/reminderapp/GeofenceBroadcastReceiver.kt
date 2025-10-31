@@ -31,37 +31,20 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
             val triggeringGeofences = geofencingEvent?.triggeringGeofences
             
             val title = intent.getStringExtra("title") ?: "Reminder"
+            val notes = intent.getStringExtra("notes") ?: ""
             val triggerType = intent.getStringExtra("trigger_type") ?: "ENTER"
             
-            // Determine message based on actual geofence transition and intended trigger type
-            val message = when {
-                geofenceTransition == com.google.android.gms.location.Geofence.GEOFENCE_TRANSITION_ENTER && triggerType == "ENTER" -> 
-                    "You have arrived at your selected location"
-                geofenceTransition == com.google.android.gms.location.Geofence.GEOFENCE_TRANSITION_EXIT && triggerType == "LEAVE" -> 
-                    "You have left your selected location"
-                geofenceTransition == com.google.android.gms.location.Geofence.GEOFENCE_TRANSITION_DWELL && triggerType == "AT" -> 
-                    "You are currently at your selected location"
-                geofenceTransition == com.google.android.gms.location.Geofence.GEOFENCE_TRANSITION_EXIT && triggerType == "NOT_AT" -> 
-                    "You are not at your selected location"
-                else -> {
-                    // Fallback based on transition type
-                    when (geofenceTransition) {
-                        com.google.android.gms.location.Geofence.GEOFENCE_TRANSITION_ENTER -> "You have entered the location"
-                        com.google.android.gms.location.Geofence.GEOFENCE_TRANSITION_EXIT -> "You have left the location"
-                        com.google.android.gms.location.Geofence.GEOFENCE_TRANSITION_DWELL -> "You are dwelling at the location"
-                        else -> "Location-based reminder triggered"
-                    }
-                }
-            }
+            // Use notes if available, otherwise use a simple default message
+            val message = if (notes.isNotEmpty()) notes else "Time for your reminder!"
             
-            Log.d("GeofenceReceiver", "Transition: $geofenceTransition, Trigger Type: $triggerType, Message: $message")
+            Log.d("GeofenceReceiver", "Transition: $geofenceTransition, Trigger Type: $triggerType, Title: $title, Notes: $notes")
             
             showNotification(context, title, message)
             
         } catch (e: Exception) {
             Log.e("GeofenceReceiver", "Error showing geofence notification: ${e.message}")
             // Fallback notification
-            showNotification(context, "Reminder", "Location-based reminder triggered")
+            showNotification(context, "Reminder", "You have a reminder!")
         }
     }
     

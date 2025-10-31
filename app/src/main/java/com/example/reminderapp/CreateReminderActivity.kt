@@ -515,7 +515,7 @@ class CreateReminderActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun addGeofenceForReminder(title: String) {
+    private fun addGeofenceForReminder(title: String, notes: String = "") {
         val latitude = selectedLatitude
         val longitude = selectedLongitude
         if (latitude == null || longitude == null) {
@@ -558,13 +558,14 @@ class CreateReminderActivity : AppCompatActivity(), OnMapReadyCallback {
 
         val intent = Intent(this, GeofenceBroadcastReceiver::class.java).apply {
             putExtra("title", title)
+            putExtra("notes", notes)
             putExtra("trigger_type", selectedTriggerType.name)
         }
         val pendingIntent = PendingIntent.getBroadcast(
             this,
             0,
             intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
         )
 
         val hasFine = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
@@ -726,7 +727,7 @@ private fun prefillTodayDefaults() {
                     }
 
                     if (useLocationTrigger && selectedLatitude != null && selectedLongitude != null) {
-                        addGeofenceForReminder(title)
+                        addGeofenceForReminder(title, notes)
                     }
 
                     val message = when {
