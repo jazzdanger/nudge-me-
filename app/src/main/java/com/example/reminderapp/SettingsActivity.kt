@@ -51,14 +51,7 @@ class SettingsActivity : AppCompatActivity() {
                     if (enabled) scheduleHydrationWorker() else cancelHydrationWorker()
                     Toast.makeText(this, if (enabled) "Water reminders enabled" else "Water reminders disabled", Toast.LENGTH_SHORT).show()
                 }
-            ),
-            SettingItem.Simple("Edit Profile"),
-            SettingItem.Simple("Change Password"),
-            SettingItem.Simple("Notifications"),
-            SettingItem.Simple("Privacy & Security"),
-            SettingItem.Simple("Language & Region"),
-            SettingItem.Simple("Help & FAQs"),
-            SettingItem.Simple("Logout")
+            )
         )
 
         adapter = SettingsAdapter(settingsList)

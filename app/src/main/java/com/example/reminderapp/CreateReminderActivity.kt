@@ -345,64 +345,26 @@ class CreateReminderActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun setupDayChipListeners() {
-        chipMonday.setOnClickListener {
-            toggleDaySelection(chipMonday, Calendar.MONDAY)
+        chipMonday.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) selectedDays.add(Calendar.MONDAY) else selectedDays.remove(Calendar.MONDAY)
         }
-        chipTuesday.setOnClickListener {
-            toggleDaySelection(chipTuesday, Calendar.TUESDAY)
+        chipTuesday.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) selectedDays.add(Calendar.TUESDAY) else selectedDays.remove(Calendar.TUESDAY)
         }
-        chipWednesday.setOnClickListener {
-            toggleDaySelection(chipWednesday, Calendar.WEDNESDAY)
+        chipWednesday.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) selectedDays.add(Calendar.WEDNESDAY) else selectedDays.remove(Calendar.WEDNESDAY)
         }
-        chipThursday.setOnClickListener {
-            toggleDaySelection(chipThursday, Calendar.THURSDAY)
+        chipThursday.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) selectedDays.add(Calendar.THURSDAY) else selectedDays.remove(Calendar.THURSDAY)
         }
-        chipFriday.setOnClickListener {
-            toggleDaySelection(chipFriday, Calendar.FRIDAY)
+        chipFriday.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) selectedDays.add(Calendar.FRIDAY) else selectedDays.remove(Calendar.FRIDAY)
         }
-        chipSaturday.setOnClickListener {
-            toggleDaySelection(chipSaturday, Calendar.SATURDAY)
+        chipSaturday.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) selectedDays.add(Calendar.SATURDAY) else selectedDays.remove(Calendar.SATURDAY)
         }
-        chipSunday.setOnClickListener {
-            toggleDaySelection(chipSunday, Calendar.SUNDAY)
-        }
-    }
-
-    private fun toggleDaySelection(chip: Chip, dayOfWeek: Int) {
-        // Toggle checked state
-        chip.isChecked = !chip.isChecked
-
-        // Maintain selectedDays set
-        if (chip.isChecked) {
-            selectedDays.add(dayOfWeek)
-        } else {
-            selectedDays.remove(dayOfWeek)
-        }
-
-        // Force visual update for chips that may not pick up ColorStateList reliably
-        updateChipVisual(chip, chip.isChecked)
-    }
-
-    private fun updateChipVisual(chip: Chip, checked: Boolean) {
-        try {
-            val bgDrawable = if (checked) {
-                ContextCompat.getDrawable(this, R.drawable.chip_bg_checked)
-            } else {
-                ContextCompat.getDrawable(this, R.drawable.chip_bg_unchecked)
-            }
-
-            // Apply drawable directly to the Chip's background to override theme styles
-            chip.background = bgDrawable
-
-            // Update text color explicitly
-            val textColor = if (checked) R.color.colorOnPrimary else R.color.colorOnSurface
-            chip.setTextColor(ContextCompat.getColor(this, textColor))
-
-            // Force a layout refresh
-            chip.invalidate()
-            chip.requestLayout()
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to update chip visual: ${e.message}")
+        chipSunday.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) selectedDays.add(Calendar.SUNDAY) else selectedDays.remove(Calendar.SUNDAY)
         }
     }
 
